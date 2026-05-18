@@ -7,6 +7,6 @@ export function registerExtractCommand(program: Command): void {
     .action(createPlaceholderAction({
       commandName: "extract",
       milestone: "Milestone 3",
-      summary: "HTML fallback extraction is intentionally out of Milestone 2 scope."
+      summary: "HTML fallback extraction remains deferred until a Markdown fetch failure requires it."
     }));
 }

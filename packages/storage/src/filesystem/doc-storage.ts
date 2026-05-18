@@ -1,6 +1,6 @@
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
-import { normalizeProjectRelativePath, toPortablePath } from "@unofficial-codex-wiki/core";
+import { normalizeProjectRelativePath, toPortablePath, type ManifestPage } from "@unofficial-codex-wiki/core";
 import { normalizeCodexPageUrl, type CodexDiscoveryOutput } from "@unofficial-codex-wiki/sources";
 
 export type FetchPageRecord = {
@@ -14,6 +14,29 @@ export type FetchReport = {
   fetchedAt: string;
   pageCount: number;
   pages: FetchPageRecord[];
+};
+
+export type DocsManifest = {
+  generatedAt: string;
+  source: string;
+  pageCount: number;
+  pages: ManifestPage[];
+};
+
+export type TransformPageRecord = {
+  id: string;
+  sourceUrl: string;
+  localMarkdownPath: string;
+  status: "generated" | "failed";
+  failureReason?: string;
+};
+
+export type TransformReport = {
+  transformedAt: string;
+  pageCount: number;
+  generatedPageCount: number;
+  failedPageCount: number;
+  pages: TransformPageRecord[];
 };
 
 export type DocStorageOptions = {
@@ -81,6 +104,44 @@ export class DocStorage {
   async writeFetchReport(report: FetchReport, snapshotId: string): Promise<void> {
     await this.writeJson("data/latest/metadata/openai-codex.fetch.json", report);
     await this.writeJson(`data/snapshots/${snapshotId}/metadata/openai-codex.fetch.json`, report);
+  }
+
+  async readLatestFetchReport(): Promise<FetchReport> {
+    return this.readJson<FetchReport>("data/latest/metadata/openai-codex.fetch.json");
+  }
+
+  async fetchReportExists(): Promise<boolean> {
+    return this.fileExists("data/latest/metadata/openai-codex.fetch.json");
+  }
+
+  async readLatestRawMarkdown(markdownSourceUrl: string): Promise<string> {
+    return this.readText(this.getRawMarkdownRelativePath(markdownSourceUrl));
+  }
+
+  async rawMarkdownExists(markdownSourceUrl: string): Promise<boolean> {
+    return this.fileExists(this.getRawMarkdownRelativePath(markdownSourceUrl));
+  }
+
+  async writeGeneratedMarkdown(localMarkdownPath: string, content: string): Promise<void> {
+    await this.writeText(localMarkdownPath, content);
+  }
+
+  async readGeneratedMarkdown(localMarkdownPath: string): Promise<string> {
+    return this.readText(localMarkdownPath);
+  }
+
+  async writeManifest(manifest: DocsManifest, snapshotId = createSnapshotId()): Promise<void> {
+    await this.writeJson("data/latest/manifest.json", manifest);
+    await this.writeJson(`data/snapshots/${snapshotId}/manifest.json`, manifest);
+  }
+
+  async readLatestManifest(): Promise<DocsManifest> {
+    return this.readJson<DocsManifest>("data/latest/manifest.json");
+  }
+
+  async writeTransformReport(report: TransformReport, snapshotId = createSnapshotId()): Promise<void> {
+    await this.writeJson("data/latest/metadata/openai-codex.transform.json", report);
+    await this.writeJson(`data/snapshots/${snapshotId}/metadata/openai-codex.transform.json`, report);
   }
 
   toAbsolutePath(relativePath: string): string {

@@ -22,9 +22,11 @@ Milestone 1 scaffold and domain types are complete.
 
 Milestone 2 discovery and safe fetching are complete.
 
-Do not begin Milestone 3 implementation until the user explicitly approves it.
+Milestone 3 Markdown generation and link rewriting are complete.
 
-Do not implement extraction, transformation, chunking, indexing, validation pipeline behavior, or docs sync behavior unless the user asks to start Milestone 3 or later.
+Do not begin Milestone 4 implementation until the user explicitly approves it.
+
+Do not implement JSONL chunking, SQLite indexing, search/read behavior, validation pipeline behavior, or docs sync behavior unless the user asks to start Milestone 4 or later.
 
 ## V1 Scope
 

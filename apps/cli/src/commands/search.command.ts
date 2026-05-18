@@ -9,7 +9,7 @@ export function registerSearchCommand(program: Command): void {
       createPlaceholderAction({
         commandName: "search",
         milestone: "Milestone 4",
-        summary: "Local search is intentionally out of Milestone 2 scope."
+        summary: "Local search is intentionally out of Milestone 3 scope."
       })(options);
     });
 }

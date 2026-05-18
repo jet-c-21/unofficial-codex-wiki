@@ -7,6 +7,6 @@ export function registerIndexCommand(program: Command): void {
     .action(createPlaceholderAction({
       commandName: "index",
       milestone: "Milestone 4",
-      summary: "Search indexing is intentionally out of Milestone 2 scope."
+      summary: "Search indexing is intentionally out of Milestone 3 scope."
     }));
 }

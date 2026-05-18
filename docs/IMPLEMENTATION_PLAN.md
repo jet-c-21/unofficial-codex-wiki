@@ -1,6 +1,6 @@
 # Implementation Plan
 
-Status: Milestone 2 complete, Milestone 3 pending user approval  
+Status: Milestone 3 complete, Milestone 4 pending user approval
 Source of truth: `docs/PRODUCT_REQUIREMENTS.md`
 
 ## Phase 0 - Agent Customization and Planning
@@ -82,7 +82,9 @@ Milestone 2 note: `docs:discover` and `docs:fetch` are implemented. `docs:fetch`
 
 ## Milestone 3 - Markdown Generation and Link Rewriting
 
-Implement:
+Complete.
+
+Implemented:
 
 - Markdown normalization,
 - front matter builder,
@@ -98,6 +100,8 @@ Validation:
 - internal links resolve,
 - external links unchanged,
 - metadata present.
+
+Milestone 3 note: `docs:transform` is implemented for Markdown-first fetched pages. It writes generated Markdown under `generated/markdown/codex/`, latest manifest metadata under `data/latest/manifest.json`, and a transform report under `data/latest/metadata/openai-codex.transform.json`. Article image links are classified as assets and preserved in place; asset downloading/mirroring remains limited to a later v1 pass when required for offline reading.
 
 ## Milestone 4 - JSONL Chunks and Search
 

@@ -7,6 +7,6 @@ export function registerChunkCommand(program: Command): void {
     .action(createPlaceholderAction({
       commandName: "chunk",
       milestone: "Milestone 4",
-      summary: "Chunking is intentionally out of Milestone 2 scope."
+      summary: "Chunking is intentionally out of Milestone 3 scope."
     }));
 }

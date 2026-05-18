@@ -12,6 +12,7 @@
     { "path": "../crawler" },
     { "path": "../logger" },
     { "path": "../sources" },
-    { "path": "../storage" }
+    { "path": "../storage" },
+    { "path": "../transformer" }
   ]
 }

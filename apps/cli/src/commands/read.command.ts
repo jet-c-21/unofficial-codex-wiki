@@ -9,7 +9,7 @@ export function registerReadCommand(program: Command): void {
       createPlaceholderAction({
         commandName: "read",
         milestone: "Milestone 4",
-        summary: "Local read behavior is intentionally out of Milestone 2 scope."
+        summary: "Local read behavior is intentionally out of Milestone 3 scope."
       })(options);
     });
 }

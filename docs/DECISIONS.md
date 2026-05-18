@@ -80,6 +80,16 @@ Status: initialized from `docs/PRODUCT_REQUIREMENTS.md` during Phase 0.
 | CLI TypeScript runner | Use `node --import tsx src/main.ts` for the CLI dev script to avoid `tsx` IPC pipe failures in restricted sandboxes. |
 | Later commands | Keep `extract`, `transform`, `chunk`, `index`, `validate`, `search`, `read`, and `sync` as non-zero placeholders after Milestone 2. |
 
+## Milestone 3 Decisions
+
+| Area | Decision |
+|---|---|
+| Transform command | Implement `docs:transform` as the Milestone 3 command and keep later commands as non-zero placeholders. |
+| Generated Markdown root page | Map the Codex root page ID `codex` to `generated/markdown/codex/index.md`; map other page IDs to `generated/markdown/codex/<id>.md`. |
+| Markdown transformation dependencies | Use a small deterministic TypeScript transformer for Milestone 3 front matter, heading extraction, and link rewriting without adding new network-installed dependencies in this pass. Revisit `unified`/`remark`/`gray-matter` before richer Markdown parsing or HTML fallback work. |
+| Asset policy | Classify inline Markdown images as `asset` links and preserve their original URLs in Milestone 3; defer asset fetching and content-addressed local asset filenames until a later v1 pass that needs offline asset mirroring. |
+| Manifest output | Write `data/latest/manifest.json` and a timestamped snapshot manifest during transform; write `data/latest/metadata/openai-codex.transform.json` for command diagnostics. |
+
 ## Decision Update Rule
 
 When a future Codex agent changes a product or architecture decision, update this file in the same task and explain the reason in the final response.
