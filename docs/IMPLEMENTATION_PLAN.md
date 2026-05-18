@@ -1,6 +1,6 @@
 # Implementation Plan
 
-Status: Milestone 4 complete, Milestone 5 pending user approval
+Status: Milestone 5 complete
 Source of truth: `docs/PRODUCT_REQUIREMENTS.md`
 
 ## Phase 0 - Agent Customization and Planning
@@ -128,7 +128,9 @@ Milestone 4 note: `docs:chunk`, `docs:index`, `docs:search`, and `docs:read` are
 
 ## Milestone 5 - Validation, Snapshots, and Docs
 
-Implement:
+Complete.
+
+Implemented:
 
 - full validator,
 - validation report,
@@ -141,6 +143,8 @@ Validation:
 - `pnpm docs:sync` passes,
 - `pnpm docs:validate` passes,
 - all PRD acceptance criteria are met.
+
+Milestone 5 note: `docs:validate` now writes `data/latest/validation-report.json` and exits non-zero when the local mirror is incomplete. `docs:sync` runs the full pipeline and writes `data/latest/diff.json` after validation passes. Limited smoke runs can still fail validation because the validator checks coverage against the full discovery output.
 
 ## V1 Definition of Done
 

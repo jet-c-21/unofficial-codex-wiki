@@ -19,6 +19,7 @@
     "@unofficial-codex-wiki/logger": "workspace:*",
     "@unofficial-codex-wiki/sources": "workspace:*",
     "@unofficial-codex-wiki/storage": "workspace:*",
-    "@unofficial-codex-wiki/transformer": "workspace:*"
+    "@unofficial-codex-wiki/transformer": "workspace:*",
+    "@unofficial-codex-wiki/validator": "workspace:*"
   }
 }

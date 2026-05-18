@@ -1,4 +1,4 @@
-import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { mkdir, readFile, readdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 import {
   normalizeProjectRelativePath,
@@ -75,6 +75,22 @@ export type IndexReport = {
   pageCount: number;
   chunkCount: number;
   sqlitePath: string;
+};
+
+export type SnapshotDiffStatus = "new" | "changed" | "unchanged" | "removed";
+
+export type SnapshotDiffPage = {
+  id: string;
+  status: SnapshotDiffStatus;
+  previousContentHash?: string;
+  currentContentHash?: string;
+};
+
+export type SnapshotDiffReport = {
+  diffedAt: string;
+  previousSnapshotId: string | null;
+  pageCount: number;
+  pages: SnapshotDiffPage[];
 };
 
 export type DocStorageOptions = {
@@ -214,6 +230,14 @@ export class DocStorage {
     await this.writeJson("generated/agent/docs.manifest.json", manifest);
   }
 
+  async readAgentDocsManifest(): Promise<AgentDocsManifest> {
+    return this.readJson<AgentDocsManifest>("generated/agent/docs.manifest.json");
+  }
+
+  async agentDocsManifestExists(): Promise<boolean> {
+    return this.fileExists("generated/agent/docs.manifest.json");
+  }
+
   async writeChunkReport(report: ChunkReport): Promise<void> {
     await this.writeJson("data/latest/metadata/openai-codex.chunk.json", report);
   }
@@ -222,12 +246,48 @@ export class DocStorage {
     await this.writeJson("data/latest/metadata/openai-codex.index.json", report);
   }
 
+  async writeValidationReport(report: unknown, snapshotId = createSnapshotId()): Promise<void> {
+    await this.writeJson("data/latest/validation-report.json", report);
+    await this.writeJson(`data/snapshots/${snapshotId}/validation-report.json`, report);
+  }
+
+  async writeDiffReport(report: SnapshotDiffReport, snapshotId = createSnapshotId()): Promise<void> {
+    await this.writeJson("data/latest/diff.json", report);
+    await this.writeJson(`data/snapshots/${snapshotId}/diff.json`, report);
+  }
+
+  async readPreviousSnapshotManifest(): Promise<{ snapshotId: string; manifest: DocsManifest } | null> {
+    const snapshotIds = await this.listSnapshotIds();
+    const latestManifest = await this.readLatestManifest().catch(() => null);
+    const candidates: Array<{ snapshotId: string; manifest: DocsManifest }> = [];
+
+    for (const snapshotId of snapshotIds) {
+      const manifestPath = `data/snapshots/${snapshotId}/manifest.json`;
+      if (!await this.fileExists(manifestPath)) {
+        continue;
+      }
+
+      const manifest = await this.readJson<DocsManifest>(manifestPath);
+      if (latestManifest !== null && manifest.generatedAt === latestManifest.generatedAt) {
+        continue;
+      }
+
+      candidates.push({ snapshotId, manifest });
+    }
+
+    return candidates.at(-1) ?? null;
+  }
+
   getSearchSqliteRelativePath(): string {
     return "generated/search/docs.sqlite";
   }
 
   async searchSqliteExists(): Promise<boolean> {
     return this.fileExists(this.getSearchSqliteRelativePath());
+  }
+
+  async generatedMarkdownExists(localMarkdownPath: string): Promise<boolean> {
+    return this.fileExists(localMarkdownPath);
   }
 
   toAbsolutePath(relativePath: string): string {
@@ -275,6 +335,18 @@ export class DocStorage {
       .split("\n")
       .filter((line) => line.trim().length > 0)
       .map((line) => JSON.parse(line) as T);
+  }
+
+  private async listSnapshotIds(): Promise<string[]> {
+    try {
+      const entries = await readdir(this.toAbsolutePath("data/snapshots"), { withFileTypes: true });
+      return entries
+        .filter((entry) => entry.isDirectory())
+        .map((entry) => entry.name)
+        .sort();
+    } catch {
+      return [];
+    }
   }
 }
 

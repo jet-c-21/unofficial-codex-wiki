@@ -15,6 +15,7 @@
     { "path": "../logger" },
     { "path": "../sources" },
     { "path": "../storage" },
-    { "path": "../transformer" }
+    { "path": "../transformer" },
+    { "path": "../validator" }
   ]
 }

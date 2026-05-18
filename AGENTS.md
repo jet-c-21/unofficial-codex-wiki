@@ -26,9 +26,9 @@ Milestone 3 Markdown generation and link rewriting are complete.
 
 Milestone 4 JSONL chunking and search are complete.
 
-Do not begin Milestone 5 implementation until the user explicitly approves it.
+Milestone 5 validation, snapshots, and docs are complete.
 
-Do not implement validation pipeline behavior, snapshot diff behavior, or docs sync behavior unless the user asks to start Milestone 5 or later.
+V1 implementation is complete when `pnpm docs:sync`, `pnpm docs:validate`, `pnpm docs:search`, and `pnpm docs:read` pass against a complete local mirror.
 
 ## V1 Scope
 

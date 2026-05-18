@@ -9,5 +9,11 @@
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "typecheck": "tsc -b tsconfig.json --pretty false"
+  },
+  "dependencies": {
+    "@unofficial-codex-wiki/config": "workspace:*",
+    "@unofficial-codex-wiki/core": "workspace:*",
+    "@unofficial-codex-wiki/sources": "workspace:*",
+    "@unofficial-codex-wiki/storage": "workspace:*"
   }
 }

@@ -117,6 +117,9 @@ importers:
       '@unofficial-codex-wiki/transformer':
         specifier: workspace:*
         version: link:../transformer
+      '@unofficial-codex-wiki/validator':
+        specifier: workspace:*
+        version: link:../validator
 
   packages/sources:
     dependencies:
@@ -148,7 +151,20 @@ importers:
         specifier: workspace:*
         version: link:../sources
 
-  packages/validator: {}
+  packages/validator:
+    dependencies:
+      '@unofficial-codex-wiki/config':
+        specifier: workspace:*
+        version: link:../config
+      '@unofficial-codex-wiki/core':
+        specifier: workspace:*
+        version: link:../core
+      '@unofficial-codex-wiki/sources':
+        specifier: workspace:*
+        version: link:../sources
+      '@unofficial-codex-wiki/storage':
+        specifier: workspace:*
+        version: link:../storage
 
 packages:
 

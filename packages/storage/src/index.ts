@@ -8,6 +8,9 @@ export type {
   FetchPageRecord,
   FetchReport,
   IndexReport,
+  SnapshotDiffPage,
+  SnapshotDiffReport,
+  SnapshotDiffStatus,
   TransformPageRecord,
   TransformReport
 } from "./filesystem/doc-storage.js";

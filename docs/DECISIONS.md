@@ -102,6 +102,16 @@ Status: initialized from `docs/PRODUCT_REQUIREMENTS.md` during Phase 0.
 | Read command matching | Resolve pages by manifest ID, generated local path, source/canonical/Markdown URL, or title slug; `#anchor` reads print the matching Markdown section. |
 | Native dependency build | In restricted sandboxes, build `better-sqlite3` under Node 24 with writable temp npm/node-gyp cache locations if the default home caches are read-only. |
 
+## Milestone 5 Decisions
+
+| Area | Decision |
+|---|---|
+| Validation strictness | Keep `docs:validate` strict against the full discovery output; limited `--limit` smoke data may fail validation because it is not a complete local mirror. |
+| Validation report | Write validation output to `data/latest/validation-report.json` and mirror it into a timestamped snapshot. |
+| Sync orchestration | Implement `docs:sync` as `discover -> fetch -> transform -> chunk -> index -> validate -> diff`; fail before diff if validation fails. |
+| Snapshot diff | Compare the latest manifest against the previous snapshot manifest by page ID and content hash, writing `data/latest/diff.json`. |
+| Documentation | Keep operational runbook guidance in `docs/operations/local-mirror.md` and high-level usage in `README.md`. |
+
 ## Decision Update Rule
 
 When a future Codex agent changes a product or architecture decision, update this file in the same task and explain the reason in the final response.
