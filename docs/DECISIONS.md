@@ -9,7 +9,7 @@ Status: initialized from `docs/PRODUCT_REQUIREMENTS.md` during Phase 0.
 | Repository name | `unofficial-codex-wiki` |
 | Product type | Private local documentation mirror and ingestion pipeline |
 | Main language | TypeScript |
-| Runtime | Node.js 22 or newer |
+| Runtime | Node.js 24 or newer |
 | Package manager | `pnpm` |
 | Module system | ESM |
 | Repo style | Domain-driven TypeScript monorepo |
@@ -41,7 +41,7 @@ Status: initialized from `docs/PRODUCT_REQUIREMENTS.md` during Phase 0.
 
 | Question | Default |
 |---|---|
-| Node version enforcement | Add `.nvmrc` with `22` during Milestone 1; do not add Volta unless requested. |
+| Node version enforcement | Add `.nvmrc` with `24` during Milestone 1; do not add Volta unless requested. |
 | Generated content in Git | Ignore `data/` and `generated/` by default; document how to override. |
 | Snapshot retention | Keep all snapshots in v1; add pruning later. |
 | Network confirmation | CLI does not prompt by default, but logs selected profile and scope clearly. |
@@ -60,6 +60,25 @@ Status: initialized from `docs/PRODUCT_REQUIREMENTS.md` during Phase 0.
 | Dependencies | Do not install dependencies in Phase 0. |
 | Product code | Do not write product implementation code in Phase 0. |
 | Git commit | Initialize Git only; do not create a commit unless the user asks. |
+
+## Milestone 1 Decisions
+
+| Area | Decision |
+|---|---|
+| CLI placeholders | Create required CLI command names in Milestone 1, but make future pipeline commands fail non-zero with an explicit not-yet-implemented message. |
+| TypeScript project references | Use TypeScript build mode for workspace typechecking because composite project references cannot be typechecked with root `--noEmit`. Generated `dist/` output remains ignored. |
+| pnpm activation | Keep repo enforcement to `.nvmrc` and `engines.node >=24`; do not add Volta or custom shell activation. |
+| Local dev scripts | Optional OS-specific helper scripts may live under `scripts/for-local-dev/`; required package scripts must remain cross-platform and pnpm-driven. |
+
+## Milestone 2 Decisions
+
+| Area | Decision |
+|---|---|
+| Discovery output | Keep `data/latest/discovery/openai-codex.urls.json` PRD-shaped with `urls` as normalized Markdown source URLs. |
+| Raw Markdown cache | Store fetched Markdown under `data/latest/raw-markdown/` and copy fetched/cached pages into timestamped snapshots. |
+| CLI project root | Resolve the repository root from the workspace package name so `pnpm --filter` commands write root-level `data/`, not `apps/cli/data/`. |
+| CLI TypeScript runner | Use `node --import tsx src/main.ts` for the CLI dev script to avoid `tsx` IPC pipe failures in restricted sandboxes. |
+| Later commands | Keep `extract`, `transform`, `chunk`, `index`, `validate`, `search`, `read`, and `sync` as non-zero placeholders after Milestone 2. |
 
 ## Decision Update Rule
 

@@ -1,0 +1,33 @@
+{
+  "compilerOptions": {
+    "target": "ES2023",
+    "lib": ["ES2023"],
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "strict": true,
+    "exactOptionalPropertyTypes": true,
+    "noUncheckedIndexedAccess": true,
+    "noImplicitOverride": true,
+    "noFallthroughCasesInSwitch": true,
+    "noImplicitReturns": true,
+    "forceConsistentCasingInFileNames": true,
+    "verbatimModuleSyntax": true,
+    "skipLibCheck": true,
+    "baseUrl": "../../",
+    "paths": {
+      "@unofficial-codex-wiki/chunker": ["packages/chunker/src/index.ts"],
+      "@unofficial-codex-wiki/config": ["packages/config/src/index.ts"],
+      "@unofficial-codex-wiki/core": ["packages/core/src/index.ts"],
+      "@unofficial-codex-wiki/crawler": ["packages/crawler/src/index.ts"],
+      "@unofficial-codex-wiki/extractor": ["packages/extractor/src/index.ts"],
+      "@unofficial-codex-wiki/indexer": ["packages/indexer/src/index.ts"],
+      "@unofficial-codex-wiki/logger": ["packages/logger/src/index.ts"],
+      "@unofficial-codex-wiki/pipeline": ["packages/pipeline/src/index.ts"],
+      "@unofficial-codex-wiki/sources": ["packages/sources/src/index.ts"],
+      "@unofficial-codex-wiki/storage": ["packages/storage/src/index.ts"],
+      "@unofficial-codex-wiki/testing": ["packages/testing/src/index.ts"],
+      "@unofficial-codex-wiki/transformer": ["packages/transformer/src/index.ts"],
+      "@unofficial-codex-wiki/validator": ["packages/validator/src/index.ts"]
+    }
+  }
+}

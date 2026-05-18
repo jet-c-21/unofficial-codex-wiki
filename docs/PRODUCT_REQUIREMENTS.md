@@ -97,7 +97,7 @@ These decisions are already made. Agents must not reopen them unless the user ex
 | Repository name | `unofficial-codex-wiki` |
 | Product type | Private local documentation mirror and ingestion pipeline |
 | Main language | TypeScript |
-| Runtime | Node.js 22 or newer |
+| Runtime | Node.js 24 or newer |
 | Package manager | `pnpm` |
 | Module system | ESM |
 | Repo style | Domain-driven TypeScript monorepo |
@@ -189,7 +189,7 @@ V1 must support these user outcomes:
 3. A developer can search local Codex documentation from the CLI.
 4. An AI coding agent can ingest JSONL page and chunk records with source metadata.
 5. The repository owner can compare snapshots and detect official documentation changes.
-6. A developer can run the repository on Ubuntu/Linux, Windows, and macOS without OS-specific setup beyond Node.js 22+, `pnpm`, and normal native dependency prerequisites.
+6. A developer can run the repository on Ubuntu/Linux, Windows, and macOS without OS-specific setup beyond Node.js 24+, `pnpm`, and normal native dependency prerequisites.
 
 V1 must not pretend to be official OpenAI documentation. All generated outputs must clearly identify themselves as an unofficial private local mirror.
 
@@ -588,7 +588,7 @@ Use these defaults unless the user explicitly changes them:
 | Area | Decision |
 |---|---|
 | Language | TypeScript |
-| Runtime | Node.js 22+ |
+| Runtime | Node.js 24+ |
 | Module system | ESM |
 | Package manager | `pnpm` |
 | Monorepo runner | Turborepo |
@@ -2183,7 +2183,7 @@ Agents should not ask about:
 
 Agents may ask only if one of these becomes blocking:
 
-1. Should Node.js 22 be enforced through `.nvmrc` only, or should the repo also use Volta?
+1. Should Node.js 24 be enforced through `.nvmrc` only, or should the repo also use Volta?
 2. Should generated content be committed to Git, ignored by default, or partially committed?
 3. Should snapshot retention keep all snapshots or prune after a fixed count?
 4. Should the initial sync require explicit user confirmation before network requests?
@@ -2193,7 +2193,7 @@ If the user does not answer, use these defaults:
 
 | Question | Default |
 |---|---|
-| Node version enforcement | Add `.nvmrc` with `22`; do not add Volta unless requested. |
+| Node version enforcement | Add `.nvmrc` with `24`; do not add Volta unless requested. |
 | Generated content in Git | Ignore `data/` and `generated/` by default; document how to override. |
 | Snapshot retention | Keep all snapshots in v1; add pruning later. |
 | Network confirmation | CLI does not prompt by default, but logs selected profile and scope clearly. |

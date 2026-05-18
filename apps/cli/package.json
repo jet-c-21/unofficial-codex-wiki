@@ -1,0 +1,23 @@
+{
+  "name": "@unofficial-codex-wiki/cli",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "bin": {
+    "codex-wiki": "./dist/main.js"
+  },
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "codex-wiki": "node --import tsx src/main.ts",
+    "typecheck": "tsc -b tsconfig.json --pretty false"
+  },
+  "dependencies": {
+    "@unofficial-codex-wiki/config": "workspace:*",
+    "@unofficial-codex-wiki/logger": "workspace:*",
+    "@unofficial-codex-wiki/pipeline": "workspace:*",
+    "commander": "^14.0.0"
+  }
+}

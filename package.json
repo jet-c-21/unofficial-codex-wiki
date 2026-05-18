@@ -1,0 +1,33 @@
+{
+  "name": "unofficial-codex-wiki",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Private local mirror and CLI ingestion pipeline for selected OpenAI Codex documentation.",
+  "type": "module",
+  "packageManager": "pnpm@10.11.0",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "build": "turbo run build",
+    "typecheck": "tsc -b --pretty false",
+    "test": "vitest run --config configs/vitest/vitest.config.ts",
+    "docs:discover": "pnpm --filter @unofficial-codex-wiki/cli codex-wiki discover",
+    "docs:fetch": "pnpm --filter @unofficial-codex-wiki/cli codex-wiki fetch",
+    "docs:extract": "pnpm --filter @unofficial-codex-wiki/cli codex-wiki extract",
+    "docs:transform": "pnpm --filter @unofficial-codex-wiki/cli codex-wiki transform",
+    "docs:chunk": "pnpm --filter @unofficial-codex-wiki/cli codex-wiki chunk",
+    "docs:index": "pnpm --filter @unofficial-codex-wiki/cli codex-wiki index",
+    "docs:validate": "pnpm --filter @unofficial-codex-wiki/cli codex-wiki validate",
+    "docs:search": "pnpm --filter @unofficial-codex-wiki/cli codex-wiki search",
+    "docs:read": "pnpm --filter @unofficial-codex-wiki/cli codex-wiki read",
+    "docs:sync": "pnpm --filter @unofficial-codex-wiki/cli codex-wiki sync"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "tsx": "^4.19.4",
+    "turbo": "^2.5.3",
+    "typescript": "^5.8.3",
+    "vitest": "^3.1.4"
+  }
+}

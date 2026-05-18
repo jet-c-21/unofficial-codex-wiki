@@ -8,7 +8,11 @@ This project is not affiliated with, endorsed by, or maintained by OpenAI.
 
 Phase 0 agent customization is complete.
 
-This repository is ready for another Codex agent to read the in-repo guidance and prepare for Milestone 1. Product implementation has not started.
+Milestone 1 scaffold and domain types are complete. The repository now has a pnpm workspace, Turborepo config, TypeScript config, package skeletons, CLI skeleton, core domain types, cross-platform path utilities, shared logger, config schema basics, and test setup.
+
+Milestone 2 discovery and safe fetching are complete. The repository can discover Codex Markdown page URLs from `/codex/llms.txt`, fetch raw Markdown into `data/`, reuse cache, and enforce offline mode.
+
+Milestone 3 has not started. Extraction, transformation, generated Markdown, chunking, indexing, validation pipeline behavior, and docs sync behavior are intentionally not implemented yet.
 
 ## Private-Use Boundary
 
@@ -34,7 +38,7 @@ Start by reading:
 4. `docs/DECISIONS.md`
 5. `docs/INITIAL_CODEX_PROMPT.md`
 
-Do not start Milestone 1 until the user explicitly approves implementation.
+Do not start Milestone 3 until the user explicitly approves implementation.
 
 ## V1 Direction
 
@@ -54,7 +58,5 @@ V1 must remain CLI-first, private-use-only, and cross-platform for Ubuntu/Linux,
 
 ## Not Implemented Yet
 
-No dependencies have been installed.
-No TypeScript package scaffold has been created.
-No product implementation code exists yet.
 No generated mirror output exists yet.
+No extraction, transformation, generated Markdown, chunking, indexing, validation pipeline, docs sync, MCP, embeddings, vector database, chatbot, local API, local viewer, scheduled sync, public publishing, or AI-summary behavior exists yet.

@@ -18,9 +18,13 @@ Keep this file concise. Detailed product requirements belong in `docs/PRODUCT_RE
 
 Phase 0 agent customization is complete.
 
-Do not begin Milestone 1 implementation until the user explicitly approves it.
+Milestone 1 scaffold and domain types are complete.
 
-Do not install dependencies, create package scaffolding, run code generation, or write product implementation code unless the user asks to start Milestone 1 or later.
+Milestone 2 discovery and safe fetching are complete.
+
+Do not begin Milestone 3 implementation until the user explicitly approves it.
+
+Do not implement extraction, transformation, chunking, indexing, validation pipeline behavior, or docs sync behavior unless the user asks to start Milestone 3 or later.
 
 ## V1 Scope
 
@@ -55,7 +59,7 @@ V1 must not implement:
 ## Engineering Rules
 
 - Use TypeScript strict mode.
-- Use Node.js 22 or newer.
+- Use Node.js 24 or newer.
 - Use pnpm workspaces.
 - Keep CLI code thin.
 - Keep source-specific URL rules in `packages/sources`.

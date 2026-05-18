@@ -1,6 +1,6 @@
 # Implementation Plan
 
-Status: Phase 0 complete, Milestone 1 pending user approval  
+Status: Milestone 2 complete, Milestone 3 pending user approval  
 Source of truth: `docs/PRODUCT_REQUIREMENTS.md`
 
 ## Phase 0 - Agent Customization and Planning
@@ -30,7 +30,7 @@ Phase 0 boundaries:
 
 ## Milestone 1 - Monorepo Scaffold and Domain Types
 
-Start only after explicit user approval.
+Complete.
 
 Implement:
 
@@ -55,7 +55,11 @@ pnpm test
 
 The same validation must pass on Ubuntu/Linux, Windows, and macOS before v1 is accepted.
 
+Milestone 1 note: future pipeline CLI commands exist only as explicit non-zero placeholder commands. They do not fetch docs, create mirror output, or claim the pipeline works.
+
 ## Milestone 2 - Discovery and Safe Fetching
+
+Complete.
 
 Implement:
 
@@ -73,6 +77,8 @@ Validation:
 - fetch output exists,
 - offline mode makes zero network requests,
 - out-of-scope URLs are rejected.
+
+Milestone 2 note: `docs:discover` and `docs:fetch` are implemented. `docs:fetch` writes raw Markdown cache under `data/`, not generated mirror output. `docs:sync` remains intentionally unimplemented until a later milestone.
 
 ## Milestone 3 - Markdown Generation and Link Rewriting
 
