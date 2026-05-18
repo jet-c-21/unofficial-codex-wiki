@@ -117,9 +117,12 @@ Status: initialized from `docs/PRODUCT_REQUIREMENTS.md` during Phase 0.
 | Area | Decision |
 |---|---|
 | Sync progress output | Use stable line-oriented `docs:sync` progress logs instead of terminal progress bars so copied output and CI logs remain readable. Keep `--json` output machine-readable and free of progress lines. |
-| Source link aliases | Rewrite a small deterministic set of upstream Codex aliases to already mirrored pages when the source link is stable but omitted from `llms.txt`: `/codex/auth/ci-cd-auth`, `/codex/guides/slash-commands`, `/codex/ide/cloud-tasks`, and `/codex/use-cases`. |
+| Source link aliases | Rewrite a small deterministic set of upstream Codex aliases to already mirrored pages when the source link is stable but omitted from `llms.txt`: `/codex/auth/ci-cd-auth`, `/codex/app/artifacts`, `/codex/guides/slash-commands`, `/codex/ide/cloud-tasks`, `/codex/plugins/build-web-apps`, and `/codex/skills/create-skill`. |
 | Source anchor aliases | Rewrite known upstream anchor aliases to generated heading anchors for `/goal` and Team Config links instead of hardcoding local output paths. |
 | Non-page Codex resources | Treat known non-documentation Codex resources such as `config-schema.json`, article images, and Codex program terms as preserved external/resource links rather than missing mirrored Markdown pages. |
+| Use-cases coverage | Crawl the official `/codex/use-cases` HTML index and discovered `/codex/use-cases/**` page links as an explicitly user-approved static HTML fallback, because this section is displayed on the official site but is not listed in `llms.txt`. |
+| Use-cases organization | Store fetched use-case source HTML under `data/latest/raw-html/use-cases/` and generate Markdown under `generated/markdown/codex/use-cases/` so local data and generated output follow the official URL hierarchy. |
+| Use-cases filter URLs | Ignore query-only use-case filter/search URLs as separate pages; normalize them to the canonical `/codex/use-cases` page to avoid mirroring UI state as duplicate documents. |
 
 ## Decision Update Rule
 

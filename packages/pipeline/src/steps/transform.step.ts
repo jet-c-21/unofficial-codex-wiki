@@ -1,7 +1,7 @@
 import { type ManifestPage, nowIsoDateTime, sha256 } from "@unofficial-codex-wiki/core";
-import { normalizeCodexPageUrl } from "@unofficial-codex-wiki/sources";
+import { isCodexUseCasesPageUrl, normalizeCodexPageUrl } from "@unofficial-codex-wiki/sources";
 import { createSnapshotId, type DocsManifest, type FetchPageRecord, type TransformPageRecord, type TransformReport } from "@unofficial-codex-wiki/storage";
-import { buildManifestPathMap, resolveManifestPathEntry, transformMarkdownPage } from "@unofficial-codex-wiki/transformer";
+import { buildManifestPathMap, htmlToMarkdown, resolveManifestPathEntry, transformMarkdownPage } from "@unofficial-codex-wiki/transformer";
 import type { PipelineContext } from "../pipeline-context.js";
 import { emitProgress } from "../progress.js";
 
@@ -28,7 +28,7 @@ export async function runTransformStep(context: PipelineContext): Promise<Transf
   emitProgress(context, {
     step: "transform",
     phase: "start",
-    message: `Transforming ${urls.length} raw Markdown page(s)`,
+    message: `Transforming ${urls.length} raw source page(s)`,
     total: urls.length,
     counts: {
       pages: urls.length
@@ -38,8 +38,10 @@ export async function runTransformStep(context: PipelineContext): Promise<Transf
 
   for (const sourceUrl of urls) {
     const normalized = normalizeCodexPageUrl(sourceUrl);
-    const localRawMarkdownPath = context.storage.getRawMarkdownRelativePath(sourceUrl);
     const fetchRecord = fetchRecords.get(normalized.markdownSourceUrl);
+    const sourceType = fetchRecord?.sourceType ?? getExpectedSourceType(sourceUrl);
+    const localRawMarkdownPath = fetchRecord?.localRawMarkdownPath ?? (sourceType === "markdown" ? context.storage.getRawMarkdownRelativePath(sourceUrl) : undefined);
+    const localRawHtmlPath = fetchRecord?.localRawHtmlPath ?? (sourceType === "html" ? context.storage.getRawHtmlRelativePath(sourceUrl) : undefined);
     const pathEntry = resolveManifestPathEntry(manifestPathMap, sourceUrl);
 
     if (pathEntry === undefined) {
@@ -50,7 +52,8 @@ export async function runTransformStep(context: PipelineContext): Promise<Transf
     if (fetchFailureReason !== undefined) {
       const failedPage = createFailedManifestPage({
         sourceUrl,
-        localRawMarkdownPath,
+        ...(localRawMarkdownPath === undefined ? {} : { localRawMarkdownPath }),
+        ...(localRawHtmlPath === undefined ? {} : { localRawHtmlPath }),
         localMarkdownPath: pathEntry.localMarkdownPath,
         fetchedAt: fetchReport.fetchedAt,
         failureReason: fetchFailureReason
@@ -60,11 +63,16 @@ export async function runTransformStep(context: PipelineContext): Promise<Transf
       continue;
     }
 
-    if (!await context.storage.rawMarkdownExists(sourceUrl)) {
-      const failureReason = `Raw Markdown cache is missing at ${localRawMarkdownPath}`;
+    const rawSourceExists = sourceType === "html"
+      ? await context.storage.rawHtmlExists(sourceUrl)
+      : await context.storage.rawMarkdownExists(sourceUrl);
+    if (!rawSourceExists) {
+      const expectedPath = sourceType === "html" ? localRawHtmlPath : localRawMarkdownPath;
+      const failureReason = `Raw ${sourceType === "html" ? "HTML" : "Markdown"} cache is missing at ${expectedPath ?? "unknown path"}`;
       const failedPage = createFailedManifestPage({
         sourceUrl,
-        localRawMarkdownPath,
+        ...(localRawMarkdownPath === undefined ? {} : { localRawMarkdownPath }),
+        ...(localRawHtmlPath === undefined ? {} : { localRawHtmlPath }),
         localMarkdownPath: pathEntry.localMarkdownPath,
         fetchedAt: fetchReport.fetchedAt,
         failureReason
@@ -74,12 +82,19 @@ export async function runTransformStep(context: PipelineContext): Promise<Transf
       continue;
     }
 
+    const rawMarkdown = sourceType === "html"
+      ? htmlToMarkdown({
+        sourceUrl: normalized.canonicalUrl,
+        html: await context.storage.readLatestRawHtml(sourceUrl)
+      })
+      : await context.storage.readLatestRawMarkdown(sourceUrl);
     const transformedPage = transformMarkdownPage({
       sourceUrl,
-      rawMarkdown: await context.storage.readLatestRawMarkdown(sourceUrl),
+      rawMarkdown,
       fetchedAt: fetchReport.fetchedAt,
       manifestPathMap,
-      localRawMarkdownPath
+      ...(localRawMarkdownPath === undefined ? {} : { localRawMarkdownPath }),
+      ...(localRawHtmlPath === undefined ? {} : { localRawHtmlPath })
     });
 
     await context.storage.writeGeneratedMarkdown(transformedPage.page.localMarkdownPath, transformedPage.markdown);
@@ -155,7 +170,8 @@ function getFetchFailureReason(fetchRecord: FetchPageRecord | undefined): string
 
 function createFailedManifestPage(input: {
   sourceUrl: string;
-  localRawMarkdownPath: string;
+  localRawMarkdownPath?: string;
+  localRawHtmlPath?: string;
   localMarkdownPath: string;
   fetchedAt: string;
   failureReason: string;
@@ -168,13 +184,20 @@ function createFailedManifestPage(input: {
     canonicalUrl: normalized.canonicalUrl,
     markdownSourceUrl: normalized.markdownSourceUrl,
     localMarkdownPath: input.localMarkdownPath,
-    localRawMarkdownPath: input.localRawMarkdownPath,
     localJsonlChunkIds: [],
     contentHash: sha256(""),
     fetchedAt: input.fetchedAt,
     status: "failed",
     failureReason: input.failureReason
   };
+
+  if (input.localRawMarkdownPath !== undefined) {
+    page.localRawMarkdownPath = input.localRawMarkdownPath;
+  }
+
+  if (input.localRawHtmlPath !== undefined) {
+    page.localRawHtmlPath = input.localRawHtmlPath;
+  }
 
   if (normalized.section !== undefined) {
     page.section = normalized.section;
@@ -191,4 +214,8 @@ function toFailedTransformPage(page: ManifestPage, failureReason: string): Trans
     status: "failed",
     failureReason
   };
+}
+
+function getExpectedSourceType(sourceUrl: string): FetchPageRecord["sourceType"] {
+  return isCodexUseCasesPageUrl(sourceUrl) ? "html" : "markdown";
 }

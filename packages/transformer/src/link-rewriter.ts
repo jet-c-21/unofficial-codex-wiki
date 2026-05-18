@@ -97,7 +97,7 @@ function rewriteHref(input: RewriteHrefInput): RewriteHrefResult {
   const absoluteHref = toAbsoluteHref(input.href, input.currentEntry.markdownSourceUrl);
 
   if (!isAllowedCodexUrl(absoluteHref)) {
-    return preserveLink(input.href, input.text, "external", true);
+    return preserveLink(input.href, input.text, "external", true, shouldAbsolutizePreservedHref(input.href) ? absoluteHref : input.href);
   }
 
   if (isKnownNonDocumentationCodexResource(absoluteHref)) {
@@ -125,9 +125,9 @@ function rewriteHref(input: RewriteHrefInput): RewriteHrefResult {
   };
 }
 
-function preserveLink(href: string, text: string, type: DocLink["type"], resolved: boolean): RewriteHrefResult {
+function preserveLink(href: string, text: string, type: DocLink["type"], resolved: boolean, rewrittenHref = href): RewriteHrefResult {
   return {
-    rewrittenHref: href,
+    rewrittenHref,
     link: {
       text,
       originalHref: href,
@@ -176,9 +176,11 @@ function anchorToSlug(anchorHref: string): string {
 
 const knownPageAliases = new Map<string, string>([
   ["https://developers.openai.com/codex/auth/ci-cd-auth", "https://developers.openai.com/codex/noninteractive#authenticate-in-ci"],
+  ["https://developers.openai.com/codex/app/artifacts", "https://developers.openai.com/codex/app/features#artifact-viewer"],
   ["https://developers.openai.com/codex/guides/slash-commands", "https://developers.openai.com/codex/cli/slash-commands"],
   ["https://developers.openai.com/codex/ide/cloud-tasks", "https://developers.openai.com/codex/ide/features#cloud-delegation"],
-  ["https://developers.openai.com/codex/use-cases", "https://developers.openai.com/codex/workflows"]
+  ["https://developers.openai.com/codex/plugins/build-web-apps", "https://developers.openai.com/codex/plugins/build"],
+  ["https://developers.openai.com/codex/skills/create-skill", "https://developers.openai.com/codex/skills#create-a-skill"]
 ]);
 
 const knownAnchorAliases = new Map<string, ReadonlyMap<string, string>>([
@@ -214,4 +216,8 @@ function isKnownNonDocumentationCodexResource(absoluteHref: string): boolean {
   }
 
   return /\.[a-z0-9]+$/iu.test(url.pathname) && !url.pathname.endsWith(".md");
+}
+
+function shouldAbsolutizePreservedHref(href: string): boolean {
+  return href.startsWith("/");
 }

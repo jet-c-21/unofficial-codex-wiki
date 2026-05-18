@@ -31,6 +31,12 @@ describe("DocStorage", () => {
     expect(storage.getRawMarkdownRelativePath("https://developers.openai.com/codex/app/commands.md")).toBe("data/latest/raw-markdown/app/commands.md");
   });
 
+  it("uses portable raw HTML paths for static fallback pages", () => {
+    const storage = new DocStorage({ projectRoot: "/tmp/project" });
+
+    expect(storage.getRawHtmlRelativePath("https://developers.openai.com/codex/use-cases/github-code-reviews")).toBe("data/latest/raw-html/use-cases/github-code-reviews.html");
+  });
+
   it("creates portable snapshot ids", () => {
     expect(createSnapshotId(new Date("2026-05-19T01:02:03.004Z"))).toBe("2026-05-19T01-02-03-004Z");
   });

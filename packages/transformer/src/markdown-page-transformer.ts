@@ -12,6 +12,7 @@ export type TransformMarkdownPageInput = {
   fetchedAt: string;
   manifestPathMap: ManifestPathMap;
   localRawMarkdownPath?: string;
+  localRawHtmlPath?: string;
 };
 
 export type TransformedMarkdownPage = {
@@ -58,6 +59,10 @@ export function transformMarkdownPage(input: TransformMarkdownPageInput): Transf
     page.localRawMarkdownPath = input.localRawMarkdownPath;
   }
 
+  if (input.localRawHtmlPath !== undefined) {
+    page.localRawHtmlPath = input.localRawHtmlPath;
+  }
+
   if (normalizedUrl.section !== undefined) {
     page.section = normalizedUrl.section;
   }
@@ -77,6 +82,10 @@ export function transformMarkdownPage(input: TransformMarkdownPageInput): Transf
 
   if (page.localRawMarkdownPath !== undefined) {
     manifestPage.localRawMarkdownPath = page.localRawMarkdownPath;
+  }
+
+  if (page.localRawHtmlPath !== undefined) {
+    manifestPage.localRawHtmlPath = page.localRawHtmlPath;
   }
 
   if (page.section !== undefined) {

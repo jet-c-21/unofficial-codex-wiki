@@ -4,6 +4,10 @@ export { openAiCodexSourceAdapter } from "./openai-codex/codex-source.adapter.js
 export { createCodexDiscoveryOutput } from "./openai-codex/codex-url-discovery.js";
 export type { CodexDiscoveryOutput } from "./openai-codex/codex-url-discovery.js";
 export {
+  isCodexUseCasesPageUrl,
+  parseCodexUseCasesHtml
+} from "./openai-codex/codex-use-cases-discovery.js";
+export {
   isAllowedCodexUrl,
   normalizeCodexMarkdownSourceUrl,
   normalizeCodexPageUrl,

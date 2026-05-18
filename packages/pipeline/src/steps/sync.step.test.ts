@@ -20,6 +20,15 @@ describe("runSyncStep", () => {
           };
         }
 
+        if (url.endsWith("/codex/use-cases")) {
+          return {
+            url,
+            status: 200,
+            headers: {},
+            body: "<main><h1>Codex Use Cases</h1><p>Example workflows and tasks teams hand to Codex.</p></main>"
+          };
+        }
+
         return {
           url,
           status: 200,
@@ -39,7 +48,7 @@ describe("runSyncStep", () => {
       }));
 
       expect(result.validation.ok).toBe(true);
-      expect(result.diff.pageCount).toBe(1);
+      expect(result.diff.pageCount).toBe(2);
       expect(result.diff.pages[0]).toMatchObject({
         id: "cli",
         status: "new"
@@ -60,7 +69,7 @@ describe("runSyncStep", () => {
       ]));
       expect(progressEvents.find((event) => event.step === "fetch" && event.phase === "progress")).toMatchObject({
         current: 1,
-        total: 1,
+        total: 2,
         item: "cli",
         status: "fetched"
       });

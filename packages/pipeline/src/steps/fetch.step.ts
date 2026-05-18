@@ -1,6 +1,6 @@
 import { CrawlerTextFetcher } from "@unofficial-codex-wiki/crawler";
 import { nowIsoDateTime } from "@unofficial-codex-wiki/core";
-import { normalizeCodexPageUrl } from "@unofficial-codex-wiki/sources";
+import { isCodexUseCasesPageUrl, normalizeCodexPageUrl } from "@unofficial-codex-wiki/sources";
 import { createSnapshotId, type FetchPageRecord, type FetchReport } from "@unofficial-codex-wiki/storage";
 import type { PipelineContext } from "../pipeline-context.js";
 import { emitProgress, estimateRemainingMs } from "../progress.js";
@@ -21,39 +21,56 @@ export async function runFetchStep(context: PipelineContext): Promise<FetchRepor
   const fetcher = new CrawlerTextFetcher(fetcherOptions);
   const pages: FetchPageRecord[] = [];
   const startedAtMs = Date.now();
+  const outputPaths = urls.some((url) => getFetchSourceType(url) === "html")
+    ? ["data/latest/raw-markdown/", "data/latest/raw-html/"]
+    : ["data/latest/raw-markdown/"];
 
   emitProgress(context, {
     step: "fetch",
     phase: "start",
-    message: `Fetching ${urls.length} Markdown page(s)`,
+    message: `Fetching ${urls.length} source page(s)`,
     total: urls.length,
     counts: {
       pages: urls.length
     },
-    outputPaths: ["data/latest/raw-markdown/"]
+    outputPaths
   });
 
   for (const [index, url] of urls.entries()) {
-    const localRawMarkdownPath = context.storage.getRawMarkdownRelativePath(url);
-    const pageId = normalizeCodexPageUrl(url).id;
+    const sourceType = getFetchSourceType(url);
+    const normalized = normalizeCodexPageUrl(url);
+    const fetchUrl = sourceType === "html" ? normalized.canonicalUrl : normalized.markdownSourceUrl;
+    const localRawMarkdownPath = sourceType === "markdown" ? context.storage.getRawMarkdownRelativePath(fetchUrl) : undefined;
+    const localRawHtmlPath = sourceType === "html" ? context.storage.getRawHtmlRelativePath(fetchUrl) : undefined;
+    const pageId = normalized.id;
     let status: FetchPageRecord["status"] = "failed";
 
     try {
       const result = await fetcher.fetchText({
-        url,
-        cache: context.storage.createRawMarkdownCache(url)
+        url: fetchUrl,
+        cache: sourceType === "html"
+          ? context.storage.createRawHtmlCache(fetchUrl)
+          : context.storage.createRawMarkdownCache(fetchUrl)
       });
-      await context.storage.copyLatestRawMarkdownToSnapshot(url, snapshotId);
+      if (sourceType === "html") {
+        await context.storage.copyLatestRawHtmlToSnapshot(fetchUrl, snapshotId);
+      } else {
+        await context.storage.copyLatestRawMarkdownToSnapshot(fetchUrl, snapshotId);
+      }
       status = result.fromCache ? "cached" : "fetched";
       pages.push({
-        url,
-        localRawMarkdownPath,
+        url: fetchUrl,
+        sourceType,
+        ...(localRawMarkdownPath === undefined ? {} : { localRawMarkdownPath }),
+        ...(localRawHtmlPath === undefined ? {} : { localRawHtmlPath }),
         status
       });
     } catch (error) {
       pages.push({
-        url,
-        localRawMarkdownPath,
+        url: fetchUrl,
+        sourceType,
+        ...(localRawMarkdownPath === undefined ? {} : { localRawMarkdownPath }),
+        ...(localRawHtmlPath === undefined ? {} : { localRawHtmlPath }),
         status: "failed",
         failureReason: error instanceof Error ? error.message : String(error)
       });
@@ -94,7 +111,7 @@ export async function runFetchStep(context: PipelineContext): Promise<FetchRepor
         cached: cachedCount,
         failed: failedPages.length
       },
-      outputPaths: ["data/latest/metadata/openai-codex.fetch.json"]
+    outputPaths: ["data/latest/metadata/openai-codex.fetch.json"]
     });
     throw new Error(`Fetch failed for ${failedPages.length} page(s). See data/latest/metadata/openai-codex.fetch.json.`);
   }
@@ -108,8 +125,12 @@ export async function runFetchStep(context: PipelineContext): Promise<FetchRepor
       cached: cachedCount,
       failed: 0
     },
-    outputPaths: ["data/latest/raw-markdown/", "data/latest/metadata/openai-codex.fetch.json"]
+    outputPaths: [...outputPaths, "data/latest/metadata/openai-codex.fetch.json"]
   });
 
   return report;
+}
+
+function getFetchSourceType(url: string): FetchPageRecord["sourceType"] {
+  return isCodexUseCasesPageUrl(url) ? "html" : "markdown";
 }

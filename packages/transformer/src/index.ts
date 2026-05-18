@@ -1,5 +1,7 @@
 export { buildMarkdownFrontMatter } from "./frontmatter-builder.js";
 export { extractMarkdownHeadings, extractMarkdownTitle } from "./headings.js";
+export { htmlToMarkdown } from "./html-to-markdown.js";
+export type { HtmlToMarkdownInput } from "./html-to-markdown.js";
 export { rewriteMarkdownLinks } from "./link-rewriter.js";
 export type { RewriteMarkdownLinksInput, RewriteMarkdownLinksResult } from "./link-rewriter.js";
 export {

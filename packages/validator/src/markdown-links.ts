@@ -51,6 +51,7 @@ export function extractHeadingSlugs(markdown: string): Set<string> {
 
     for (const anchorTarget of extractExplicitAnchorTargets(line)) {
       slugs.add(anchorTarget);
+      slugs.add(slugifyHeading(anchorTarget));
     }
 
     const match = /^(#{1,6})\s+(.+?)\s*$/u.exec(line);
@@ -114,7 +115,7 @@ function extractExplicitHeadingId(rawText: string): string | undefined {
 
 function extractExplicitAnchorTargets(line: string): string[] {
   const targets: string[] = [];
-  const attributePattern = /\b(?:id|name)=["']([^"']+)["']/giu;
+  const attributePattern = /\b(?:id|name|slug)=["']([^"']+)["']/giu;
 
   for (const match of line.matchAll(attributePattern)) {
     const target = match[1]?.trim();

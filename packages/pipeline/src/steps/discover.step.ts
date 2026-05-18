@@ -1,7 +1,12 @@
 import { openAiCodexSourceConfig } from "@unofficial-codex-wiki/config";
 import { CrawlerTextFetcher } from "@unofficial-codex-wiki/crawler";
 import { nowIsoDateTime } from "@unofficial-codex-wiki/core";
-import { createCodexDiscoveryOutput, type CodexDiscoveryOutput } from "@unofficial-codex-wiki/sources";
+import {
+  createCodexDiscoveryOutput,
+  normalizeCodexPageUrl,
+  parseCodexUseCasesHtml,
+  type CodexDiscoveryOutput
+} from "@unofficial-codex-wiki/sources";
 import type { PipelineContext } from "../pipeline-context.js";
 import { emitProgress } from "../progress.js";
 
@@ -41,20 +46,22 @@ export async function runDiscoverStep(context: PipelineContext): Promise<Discove
 
   if (context.policy.cacheMode === "prefer-cache" && await context.storage.discoveryOutputExists()) {
     const discovery = await context.storage.readLatestDiscoveryOutput();
-    emitProgress(context, {
-      step: "discover",
-      phase: "complete",
-      message: `Discovered ${discovery.pageCount} page(s) from cache`,
-      counts: {
-        pages: discovery.pageCount
-      },
-      outputPaths: ["data/latest/discovery/openai-codex.urls.json"]
-    });
+    if (discoveryIncludesUseCases(discovery)) {
+      emitProgress(context, {
+        step: "discover",
+        phase: "complete",
+        message: `Discovered ${discovery.pageCount} page(s) from cache`,
+        counts: {
+          pages: discovery.pageCount
+        },
+        outputPaths: ["data/latest/discovery/openai-codex.urls.json"]
+      });
 
-    return {
-      discovery,
-      fromCache: true
-    };
+      return {
+        discovery,
+        fromCache: true
+      };
+    }
   }
 
   const fetcherOptions: ConstructorParameters<typeof CrawlerTextFetcher>[0] = {
@@ -73,12 +80,20 @@ export async function runDiscoverStep(context: PipelineContext): Promise<Discove
       url: openAiCodexSourceConfig.discoveryUrl,
       cache: context.storage.createDiscoveryDocumentCache()
     });
-    const discovery = createCodexDiscoveryOutput(fetchResult.body, nowIsoDateTime());
+    const useCasesFetchResult = await fetcher.fetchText({
+      url: openAiCodexSourceConfig.useCasesUrl,
+      cache: context.storage.createUseCasesDiscoveryDocumentCache()
+    });
+    const discovery = createAugmentedCodexDiscoveryOutput({
+      llmsText: fetchResult.body,
+      useCasesHtml: useCasesFetchResult.body,
+      discoveredAt: nowIsoDateTime()
+    });
     await context.storage.writeDiscoveryOutput(discovery);
     emitProgress(context, {
       step: "discover",
       phase: "complete",
-      message: `Discovered ${discovery.pageCount} page(s)${fetchResult.fromCache ? " from cache" : " from network"}`,
+      message: `Discovered ${discovery.pageCount} page(s)${fetchResult.fromCache && useCasesFetchResult.fromCache ? " from cache" : " from network/cache"}`,
       counts: {
         pages: discovery.pageCount
       },
@@ -87,7 +102,7 @@ export async function runDiscoverStep(context: PipelineContext): Promise<Discove
 
     return {
       discovery,
-      fromCache: fetchResult.fromCache
+      fromCache: fetchResult.fromCache && useCasesFetchResult.fromCache
     };
   } catch (error) {
     if (context.policy.cacheMode === "refresh" && await context.storage.discoveryOutputExists()) {
@@ -115,4 +130,49 @@ export async function runDiscoverStep(context: PipelineContext): Promise<Discove
     });
     throw error;
   }
+}
+
+function createAugmentedCodexDiscoveryOutput(input: {
+  llmsText: string;
+  useCasesHtml: string;
+  discoveredAt: string;
+}): CodexDiscoveryOutput {
+  const discovery = createCodexDiscoveryOutput(input.llmsText, input.discoveredAt);
+  const seenCanonicalUrls = new Set<string>();
+  const urls: string[] = [];
+
+  for (const url of discovery.urls) {
+    const normalized = normalizeCodexPageUrl(url);
+    if (seenCanonicalUrls.has(normalized.canonicalUrl)) {
+      continue;
+    }
+
+    seenCanonicalUrls.add(normalized.canonicalUrl);
+    urls.push(normalized.markdownSourceUrl);
+  }
+
+  for (const link of parseCodexUseCasesHtml(input.useCasesHtml)) {
+    if (seenCanonicalUrls.has(link.canonicalUrl)) {
+      continue;
+    }
+
+    seenCanonicalUrls.add(link.canonicalUrl);
+    urls.push(link.canonicalUrl);
+  }
+
+  return {
+    ...discovery,
+    pageCount: urls.length,
+    urls
+  };
+}
+
+function discoveryIncludesUseCases(discovery: CodexDiscoveryOutput): boolean {
+  return discovery.urls.some((url) => {
+    try {
+      return normalizeCodexPageUrl(url).canonicalUrl === openAiCodexSourceConfig.useCasesUrl;
+    } catch {
+      return false;
+    }
+  });
 }

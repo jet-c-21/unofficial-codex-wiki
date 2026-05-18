@@ -11,7 +11,9 @@ import { normalizeCodexPageUrl, type CodexDiscoveryOutput } from "@unofficial-co
 
 export type FetchPageRecord = {
   url: string;
-  localRawMarkdownPath: string;
+  sourceType: "markdown" | "html";
+  localRawMarkdownPath?: string;
+  localRawHtmlPath?: string;
   status: "fetched" | "cached" | "failed";
   failureReason?: string;
 };
@@ -129,13 +131,42 @@ export class DocStorage {
     };
   }
 
+  createUseCasesDiscoveryDocumentCache() {
+    const relativePath = "data/latest/discovery/openai-codex.use-cases.html";
+
+    return {
+      exists: async () => this.fileExists(relativePath),
+      read: async () => this.readText(relativePath),
+      write: async (content: string) => {
+        await this.writeText(relativePath, content);
+      }
+    };
+  }
+
   getRawMarkdownRelativePath(markdownSourceUrl: string): string {
     const normalized = normalizeCodexPageUrl(markdownSourceUrl);
     return toPortablePath(path.posix.join("data", "latest", "raw-markdown", `${normalized.id}.md`));
   }
 
+  getRawHtmlRelativePath(sourceUrl: string): string {
+    const normalized = normalizeCodexPageUrl(sourceUrl);
+    return toPortablePath(path.posix.join("data", "latest", "raw-html", `${normalized.id}.html`));
+  }
+
   createRawMarkdownCache(markdownSourceUrl: string) {
     const relativePath = this.getRawMarkdownRelativePath(markdownSourceUrl);
+
+    return {
+      exists: async () => this.fileExists(relativePath),
+      read: async () => this.readText(relativePath),
+      write: async (content: string) => {
+        await this.writeText(relativePath, content);
+      }
+    };
+  }
+
+  createRawHtmlCache(sourceUrl: string) {
+    const relativePath = this.getRawHtmlRelativePath(sourceUrl);
 
     return {
       exists: async () => this.fileExists(relativePath),
@@ -151,6 +182,15 @@ export class DocStorage {
     const content = await this.readText(latestRelativePath);
     const normalized = normalizeCodexPageUrl(markdownSourceUrl);
     const snapshotRelativePath = toPortablePath(path.posix.join("data", "snapshots", snapshotId, "raw-markdown", `${normalized.id}.md`));
+    await this.writeText(snapshotRelativePath, content);
+    return snapshotRelativePath;
+  }
+
+  async copyLatestRawHtmlToSnapshot(sourceUrl: string, snapshotId: string): Promise<string> {
+    const latestRelativePath = this.getRawHtmlRelativePath(sourceUrl);
+    const content = await this.readText(latestRelativePath);
+    const normalized = normalizeCodexPageUrl(sourceUrl);
+    const snapshotRelativePath = toPortablePath(path.posix.join("data", "snapshots", snapshotId, "raw-html", `${normalized.id}.html`));
     await this.writeText(snapshotRelativePath, content);
     return snapshotRelativePath;
   }
@@ -174,6 +214,14 @@ export class DocStorage {
 
   async rawMarkdownExists(markdownSourceUrl: string): Promise<boolean> {
     return this.fileExists(this.getRawMarkdownRelativePath(markdownSourceUrl));
+  }
+
+  async readLatestRawHtml(sourceUrl: string): Promise<string> {
+    return this.readText(this.getRawHtmlRelativePath(sourceUrl));
+  }
+
+  async rawHtmlExists(sourceUrl: string): Promise<boolean> {
+    return this.fileExists(this.getRawHtmlRelativePath(sourceUrl));
   }
 
   async writeGeneratedMarkdown(localMarkdownPath: string, content: string): Promise<void> {

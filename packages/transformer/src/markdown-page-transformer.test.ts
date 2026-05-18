@@ -82,6 +82,7 @@ describe("transformMarkdownPage", () => {
       "https://developers.openai.com/codex/cli/features.md",
       "https://developers.openai.com/codex/cli/slash-commands.md",
       "https://developers.openai.com/codex/noninteractive.md",
+      "https://developers.openai.com/codex/use-cases",
       "https://developers.openai.com/codex/workflows.md"
     ]);
 
@@ -92,11 +93,11 @@ describe("transformMarkdownPage", () => {
       rawMarkdown: [
         "# CLI features",
         "",
-        "See [slash commands](https://developers.openai.com/codex/guides/slash-commands), [CI auth](https://developers.openai.com/codex/auth/ci-cd-auth), [use cases](https://developers.openai.com/codex/use-cases), [schema](https://developers.openai.com/codex/config-schema.json), and [terms](https://developers.openai.com/codex/codex-for-oss-terms)."
+        "See [slash commands](https://developers.openai.com/codex/guides/slash-commands), [CI auth](https://developers.openai.com/codex/auth/ci-cd-auth), [use cases](https://developers.openai.com/codex/use-cases), [file inputs](/api/docs/guides/file-inputs), [schema](https://developers.openai.com/codex/config-schema.json), and [terms](https://developers.openai.com/codex/codex-for-oss-terms)."
       ].join("\n")
     });
 
-    expect(result.markdown).toContain("See [slash commands](slash-commands.md), [CI auth](../noninteractive.md#authenticate-in-ci), [use cases](../workflows.md), [schema](https://developers.openai.com/codex/config-schema.json), and [terms](https://developers.openai.com/codex/codex-for-oss-terms).");
+    expect(result.markdown).toContain("See [slash commands](slash-commands.md), [CI auth](../noninteractive.md#authenticate-in-ci), [use cases](../use-cases.md), [file inputs](https://developers.openai.com/api/docs/guides/file-inputs), [schema](https://developers.openai.com/codex/config-schema.json), and [terms](https://developers.openai.com/codex/codex-for-oss-terms).");
     expect(result.page.links).toEqual(expect.arrayContaining([
       expect.objectContaining({
         originalHref: "https://developers.openai.com/codex/guides/slash-commands",

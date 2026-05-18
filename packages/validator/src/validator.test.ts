@@ -145,7 +145,11 @@ describe("validateMirror", () => {
       "",
       "<div id=\"credits-overview\">",
       "Credit details.",
-      "</div>"
+      "</div>",
+      "",
+      "<ModelCard slug=\"gpt-5.3-codex-spark\" />",
+      "",
+      "See [Spark](#gpt-53-codex-spark)."
     ].join("\n")));
 
     expect(report.ok).toBe(true);
@@ -182,6 +186,43 @@ describe("validateMirror", () => {
         examplePaths: ["generated/markdown/codex/cli.md"]
       })
     ]);
+  });
+
+  it("accepts canonical HTML fallback URLs in discovery coverage", () => {
+    const baseInput = createSinglePageValidationInput("# Use cases\n\nLocal HTML fallback page.");
+    if (baseInput.discovery === null || baseInput.manifest === null) {
+      throw new Error("Test fixture unexpectedly omitted discovery or manifest.");
+    }
+
+    const report = validateMirror({
+      ...baseInput,
+      discovery: {
+        ...baseInput.discovery,
+        urls: ["https://developers.openai.com/codex/use-cases"]
+      },
+      manifest: {
+        ...baseInput.manifest,
+        pages: [{
+          ...baseInput.manifest.pages[0]!,
+          id: "use-cases",
+          title: "Use cases",
+          sourceUrl: "https://developers.openai.com/codex/use-cases",
+          canonicalUrl: "https://developers.openai.com/codex/use-cases",
+          markdownSourceUrl: "https://developers.openai.com/codex/use-cases.md",
+          localMarkdownPath: "generated/markdown/codex/use-cases.md"
+        }]
+      },
+      generatedMarkdownPages: [{
+        localMarkdownPath: "generated/markdown/codex/use-cases.md",
+        content: baseInput.generatedMarkdownPages[0]?.content?.replaceAll("generated/markdown/codex/cli.md", "generated/markdown/codex/use-cases.md") ?? null
+      }]
+    });
+
+    expect(report.checks.find((check) => check.name === "coverage")?.issues).not.toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        code: "missing-manifest-page"
+      })
+    ]));
   });
 });
 

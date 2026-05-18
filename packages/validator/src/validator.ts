@@ -46,9 +46,9 @@ function validateCoverage(input: ValidationInput): ValidationIssue[] {
     return issues;
   }
 
-  const manifestByMarkdownUrl = new Map(input.manifest.pages.map((page) => [page.markdownSourceUrl, page]));
+  const manifestCanonicalUrls = new Set(input.manifest.pages.map((page) => page.canonicalUrl));
   for (const url of input.discovery?.urls ?? []) {
-    if (!manifestByMarkdownUrl.has(url)) {
+    if (!manifestCanonicalUrls.has(normalizeCodexPageUrl(url).canonicalUrl)) {
       issues.push(error("missing-manifest-page", `Discovered URL is missing from manifest: ${url}`));
     }
   }

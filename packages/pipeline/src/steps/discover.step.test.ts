@@ -11,18 +11,36 @@ const llmsText = `
 - [CLI](https://developers.openai.com/codex/cli.md): Terminal client
 `;
 
+const useCasesHtml = `
+<main>
+  <h1>Codex Use Cases</h1>
+  <a href="/codex/use-cases/collections/production-systems">Production systems</a>
+  <a href="/codex/use-cases/github-code-reviews">GitHub code reviews</a>
+</main>
+`;
+
 describe("runDiscoverStep", () => {
   it("writes discovery output from llms.txt", async () => {
     const projectRoot = await mkdtemp(path.join(tmpdir(), "codex-wiki-discover-"));
     try {
-      const httpClient: HttpFetchClient = async (url) => ({ url, status: 200, headers: {}, body: llmsText });
+      const httpClient: HttpFetchClient = async (url) => ({
+        url,
+        status: 200,
+        headers: {},
+        body: url.endsWith("/codex/use-cases") ? useCasesHtml : llmsText
+      });
       const result = await runDiscoverStep(createPipelineContext({
         projectRoot,
         httpClient,
         delay: async () => undefined
       }));
 
-      expect(result.discovery.urls).toEqual(["https://developers.openai.com/codex/cli.md"]);
+      expect(result.discovery.urls).toEqual([
+        "https://developers.openai.com/codex/cli.md",
+        "https://developers.openai.com/codex/use-cases",
+        "https://developers.openai.com/codex/use-cases/collections/production-systems",
+        "https://developers.openai.com/codex/use-cases/github-code-reviews"
+      ]);
       expect(result.fromCache).toBe(false);
     } finally {
       await rm(projectRoot, { recursive: true, force: true });
