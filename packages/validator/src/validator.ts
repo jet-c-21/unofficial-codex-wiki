@@ -1,6 +1,6 @@
 import type { CrawlerPolicy } from "@unofficial-codex-wiki/config";
 import type { AgentDocChunkRecord, AgentDocPageRecord, ManifestPage } from "@unofficial-codex-wiki/core";
-import type { CodexDiscoveryOutput } from "@unofficial-codex-wiki/sources";
+import { isAllowedCodexUrl, normalizeCodexPageUrl, type CodexDiscoveryOutput } from "@unofficial-codex-wiki/sources";
 import type { AgentDocsManifest, DocsManifest } from "@unofficial-codex-wiki/storage";
 import { parseFrontMatter } from "./frontmatter.js";
 import { extractHeadingSlugs, extractMarkdownLinks, isExternalHref, resolveMarkdownHref } from "./markdown-links.js";
@@ -122,6 +122,7 @@ function validateLinksAndAnchors(input: ValidationInput): ValidationIssue[] {
     page.localMarkdownPath,
     page.content === null ? new Set<string>() : extractHeadingSlugs(page.content)
   ]));
+  const mirroredCanonicalUrls = new Set(input.manifest?.pages.map((page) => page.canonicalUrl) ?? []);
 
   for (const page of input.generatedMarkdownPages) {
     if (page.content === null) {
@@ -129,9 +130,14 @@ function validateLinksAndAnchors(input: ValidationInput): ValidationIssue[] {
     }
 
     for (const link of extractMarkdownLinks(page.content)) {
-      if (link.image || isExternalHref(link.href)) {
-        if (/^https:\/\/developers\.openai\.com\/codex(?:\/|$)/u.test(link.href)) {
-          issues.push(error("unrewritten-internal-link", `Internal Codex link was not rewritten: ${link.href}`, page.localMarkdownPath));
+      if (link.image) {
+        continue;
+      }
+
+      if (isExternalHref(link.href)) {
+        const codexIssue = getUnrewrittenCodexLinkIssue(link.href, mirroredCanonicalUrls, page.localMarkdownPath);
+        if (codexIssue !== undefined) {
+          issues.push(codexIssue);
         }
         continue;
       }
@@ -153,6 +159,44 @@ function validateLinksAndAnchors(input: ValidationInput): ValidationIssue[] {
 
   return issues;
 }
+
+function getUnrewrittenCodexLinkIssue(
+  href: string,
+  mirroredCanonicalUrls: ReadonlySet<string>,
+  path: string
+): ValidationIssue | undefined {
+  if (!isCodexDocumentationHref(href)) {
+    return undefined;
+  }
+
+  const normalized = normalizeCodexPageUrl(href);
+  if (!mirroredCanonicalUrls.has(normalized.canonicalUrl)) {
+    return error(
+      "unresolved-internal-codex-link",
+      `Internal Codex link is not in the mirror manifest and cannot be rewritten: ${href}`,
+      path
+    );
+  }
+
+  return error("unrewritten-internal-link", `Internal Codex link was not rewritten: ${href}`, path);
+}
+
+function isCodexDocumentationHref(href: string): boolean {
+  if (!isAllowedCodexUrl(href)) {
+    return false;
+  }
+
+  const url = new URL(href);
+  if (knownNonDocumentationCodexPathnames.has(url.pathname)) {
+    return false;
+  }
+
+  return !/\.[a-z0-9]+$/iu.test(url.pathname) || url.pathname.endsWith(".md");
+}
+
+const knownNonDocumentationCodexPathnames = new Set([
+  "/codex/codex-for-oss-terms"
+]);
 
 function validateAssets(input: ValidationInput): ValidationIssue[] {
   const issues: ValidationIssue[] = [];

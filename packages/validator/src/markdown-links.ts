@@ -49,10 +49,19 @@ export function extractHeadingSlugs(markdown: string): Set<string> {
       continue;
     }
 
+    for (const anchorTarget of extractExplicitAnchorTargets(line)) {
+      slugs.add(anchorTarget);
+    }
+
     const match = /^(#{1,6})\s+(.+?)\s*$/u.exec(line);
     const rawText = match?.[2];
     if (rawText === undefined) {
       continue;
+    }
+
+    const explicitHeadingId = extractExplicitHeadingId(rawText);
+    if (explicitHeadingId !== undefined) {
+      slugs.add(explicitHeadingId);
     }
 
     slugs.add(slugifyHeading(stripHeadingSyntax(rawText)));
@@ -91,8 +100,28 @@ function stripHeadingSyntax(rawText: string): string {
   return rawText
     .replace(/\s+#+\s*$/u, "")
     .replace(/\s+\{#[A-Za-z0-9_-]+\}\s*$/u, "")
+    .replace(/<[^>]+>/gu, "")
     .replace(/`([^`]+)`/gu, "$1")
     .replace(/\[([^\]]+)\]\([^)]+\)/gu, "$1")
     .replace(/[*_~]/gu, "")
     .trim();
+}
+
+function extractExplicitHeadingId(rawText: string): string | undefined {
+  const match = /\s+\{#([A-Za-z0-9_-]+)\}\s*$/u.exec(rawText);
+  return match?.[1];
+}
+
+function extractExplicitAnchorTargets(line: string): string[] {
+  const targets: string[] = [];
+  const attributePattern = /\b(?:id|name)=["']([^"']+)["']/giu;
+
+  for (const match of line.matchAll(attributePattern)) {
+    const target = match[1]?.trim();
+    if (target !== undefined && target.length > 0) {
+      targets.push(target);
+    }
+  }
+
+  return targets;
 }

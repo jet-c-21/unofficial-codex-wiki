@@ -75,4 +75,62 @@ describe("transformMarkdownPage", () => {
 
     expect(result.markdown).toContain("See [CLI](../cli.md#configuration).");
   });
+
+  it("rewrites known source aliases and preserves non-page Codex resources", () => {
+    const manifestPathMap = buildManifestPathMap([
+      "https://developers.openai.com/codex/auth.md",
+      "https://developers.openai.com/codex/cli/features.md",
+      "https://developers.openai.com/codex/cli/slash-commands.md",
+      "https://developers.openai.com/codex/noninteractive.md",
+      "https://developers.openai.com/codex/workflows.md"
+    ]);
+
+    const result = transformMarkdownPage({
+      sourceUrl: "https://developers.openai.com/codex/cli/features.md",
+      fetchedAt: "2026-05-19T00:00:00.000Z",
+      manifestPathMap,
+      rawMarkdown: [
+        "# CLI features",
+        "",
+        "See [slash commands](https://developers.openai.com/codex/guides/slash-commands), [CI auth](https://developers.openai.com/codex/auth/ci-cd-auth), [use cases](https://developers.openai.com/codex/use-cases), [schema](https://developers.openai.com/codex/config-schema.json), and [terms](https://developers.openai.com/codex/codex-for-oss-terms)."
+      ].join("\n")
+    });
+
+    expect(result.markdown).toContain("See [slash commands](slash-commands.md), [CI auth](../noninteractive.md#authenticate-in-ci), [use cases](../workflows.md), [schema](https://developers.openai.com/codex/config-schema.json), and [terms](https://developers.openai.com/codex/codex-for-oss-terms).");
+    expect(result.page.links).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        originalHref: "https://developers.openai.com/codex/guides/slash-commands",
+        localHref: "slash-commands.md",
+        type: "internal",
+        resolved: true
+      }),
+      expect.objectContaining({
+        originalHref: "https://developers.openai.com/codex/config-schema.json",
+        localHref: null,
+        type: "external",
+        resolved: true
+      })
+    ]));
+  });
+
+  it("rewrites known source anchor aliases", () => {
+    const manifestPathMap = buildManifestPathMap([
+      "https://developers.openai.com/codex/cli/slash-commands.md"
+    ]);
+
+    const result = transformMarkdownPage({
+      sourceUrl: "https://developers.openai.com/codex/cli/slash-commands.md",
+      fetchedAt: "2026-05-19T00:00:00.000Z",
+      manifestPathMap,
+      rawMarkdown: [
+        "# Slash commands in Codex CLI",
+        "",
+        "See [`/goal`](#set-or-view-an-experimental-task-goal-with-goal).",
+        "",
+        "### Set an experimental goal with `/goal`"
+      ].join("\n")
+    });
+
+    expect(result.markdown).toContain("See [`/goal`](#set-an-experimental-goal-with-goal).");
+  });
 });

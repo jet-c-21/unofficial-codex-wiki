@@ -80,13 +80,14 @@ function rewriteHref(input: RewriteHrefInput): RewriteHrefResult {
   }
 
   if (input.href.startsWith("#")) {
-    const resolved = input.headingSlugs.has(anchorToSlug(input.href));
+    const rewrittenHref = resolveKnownAnchorAlias(input.currentEntry.id, input.href);
+    const resolved = input.headingSlugs.has(anchorToSlug(rewrittenHref));
     return {
-      rewrittenHref: input.href,
+      rewrittenHref,
       link: {
         text: input.text,
         originalHref: input.href,
-        localHref: input.href,
+        localHref: rewrittenHref,
         type: "anchor",
         resolved
       }
@@ -99,12 +100,17 @@ function rewriteHref(input: RewriteHrefInput): RewriteHrefResult {
     return preserveLink(input.href, input.text, "external", true);
   }
 
-  const target = findEntryForHref(input.manifestPathMap, absoluteHref);
+  if (isKnownNonDocumentationCodexResource(absoluteHref)) {
+    return preserveLink(input.href, input.text, "external", true);
+  }
+
+  const aliasedHref = resolveKnownPageAlias(absoluteHref);
+  const target = findEntryForHref(input.manifestPathMap, aliasedHref);
   if (target === undefined) {
     return preserveLink(input.href, input.text, "internal", false);
   }
 
-  const hash = getHash(input.href);
+  const hash = resolveKnownAnchorAlias(target.id, getHash(aliasedHref));
   const rewrittenHref = toRelativeMarkdownHref(input.currentEntry.localMarkdownPath, target.localMarkdownPath, hash);
 
   return {
@@ -166,4 +172,46 @@ function anchorToSlug(anchorHref: string): string {
   } catch {
     return slugifyHeading(anchorText);
   }
+}
+
+const knownPageAliases = new Map<string, string>([
+  ["https://developers.openai.com/codex/auth/ci-cd-auth", "https://developers.openai.com/codex/noninteractive#authenticate-in-ci"],
+  ["https://developers.openai.com/codex/guides/slash-commands", "https://developers.openai.com/codex/cli/slash-commands"],
+  ["https://developers.openai.com/codex/ide/cloud-tasks", "https://developers.openai.com/codex/ide/features#cloud-delegation"],
+  ["https://developers.openai.com/codex/use-cases", "https://developers.openai.com/codex/workflows"]
+]);
+
+const knownAnchorAliases = new Map<string, ReadonlyMap<string, string>>([
+  ["cli/slash-commands", new Map([
+    ["#set-or-view-an-experimental-task-goal-with-goal", "#set-an-experimental-goal-with-goal"]
+  ])],
+  ["enterprise/admin-setup", new Map([
+    ["#team-config", "#step-4-standardize-local-configuration-with-team-config"]
+  ])]
+]);
+
+const knownNonDocumentationCodexPathnames = new Set([
+  "/codex/codex-for-oss-terms"
+]);
+
+function resolveKnownPageAlias(absoluteHref: string): string {
+  const normalized = normalizeCodexPageUrl(absoluteHref);
+  return knownPageAliases.get(normalized.canonicalUrl) ?? absoluteHref;
+}
+
+function resolveKnownAnchorAlias(pageId: string, hash: string): string {
+  if (hash.length === 0) {
+    return "";
+  }
+
+  return knownAnchorAliases.get(pageId)?.get(hash) ?? hash;
+}
+
+function isKnownNonDocumentationCodexResource(absoluteHref: string): boolean {
+  const url = new URL(absoluteHref);
+  if (knownNonDocumentationCodexPathnames.has(url.pathname)) {
+    return true;
+  }
+
+  return /\.[a-z0-9]+$/iu.test(url.pathname) && !url.pathname.endsWith(".md");
 }

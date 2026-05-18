@@ -112,6 +112,15 @@ Status: initialized from `docs/PRODUCT_REQUIREMENTS.md` during Phase 0.
 | Snapshot diff | Compare the latest manifest against the previous snapshot manifest by page ID and content hash, writing `data/latest/diff.json`. |
 | Documentation | Keep operational runbook guidance in `docs/operations/local-mirror.md` and high-level usage in `README.md`. |
 
+## V1 Stabilization Decisions
+
+| Area | Decision |
+|---|---|
+| Sync progress output | Use stable line-oriented `docs:sync` progress logs instead of terminal progress bars so copied output and CI logs remain readable. Keep `--json` output machine-readable and free of progress lines. |
+| Source link aliases | Rewrite a small deterministic set of upstream Codex aliases to already mirrored pages when the source link is stable but omitted from `llms.txt`: `/codex/auth/ci-cd-auth`, `/codex/guides/slash-commands`, `/codex/ide/cloud-tasks`, and `/codex/use-cases`. |
+| Source anchor aliases | Rewrite known upstream anchor aliases to generated heading anchors for `/goal` and Team Config links instead of hardcoding local output paths. |
+| Non-page Codex resources | Treat known non-documentation Codex resources such as `config-schema.json`, article images, and Codex program terms as preserved external/resource links rather than missing mirrored Markdown pages. |
+
 ## Decision Update Rule
 
 When a future Codex agent changes a product or architecture decision, update this file in the same task and explain the reason in the final response.

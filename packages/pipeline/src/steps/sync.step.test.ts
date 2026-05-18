@@ -3,7 +3,7 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import type { HttpFetchClient } from "@unofficial-codex-wiki/crawler";
 import { describe, expect, it } from "vitest";
-import { createPipelineContext } from "../pipeline-context.js";
+import { createPipelineContext, type PipelineProgressEvent } from "../pipeline-context.js";
 import { runSyncStep } from "./sync.step.js";
 
 describe("runSyncStep", () => {
@@ -27,11 +27,15 @@ describe("runSyncStep", () => {
           body: "# Codex CLI\n\nCodex local search content.\n\n## Usage\n\nUse Codex safely with [OpenAI](https://openai.com).\n"
         };
       };
+      const progressEvents: PipelineProgressEvent[] = [];
 
       const result = await runSyncStep(createPipelineContext({
         projectRoot,
         httpClient,
-        delay: async () => undefined
+        delay: async () => undefined,
+        onProgress: (event) => {
+          progressEvents.push(event);
+        }
       }));
 
       expect(result.validation.ok).toBe(true);
@@ -39,6 +43,26 @@ describe("runSyncStep", () => {
       expect(result.diff.pages[0]).toMatchObject({
         id: "cli",
         status: "new"
+      });
+      expect(progressEvents.map((event) => `${event.step}:${event.phase}`)).toEqual(expect.arrayContaining([
+        "sync:start",
+        "discover:start",
+        "discover:complete",
+        "fetch:start",
+        "fetch:progress",
+        "fetch:complete",
+        "transform:complete",
+        "chunk:complete",
+        "index:complete",
+        "validate:complete",
+        "diff:complete",
+        "sync:complete"
+      ]));
+      expect(progressEvents.find((event) => event.step === "fetch" && event.phase === "progress")).toMatchObject({
+        current: 1,
+        total: 1,
+        item: "cli",
+        status: "fetched"
       });
     } finally {
       await rm(projectRoot, { recursive: true, force: true });

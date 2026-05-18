@@ -1,5 +1,12 @@
 export { createPipelineContext } from "./pipeline-context.js";
-export type { PipelineCommandOptions, PipelineContext } from "./pipeline-context.js";
+export type {
+  PipelineCommandOptions,
+  PipelineContext,
+  PipelineProgressEvent,
+  PipelineProgressListener,
+  PipelineProgressPhase,
+  PipelineStepName
+} from "./pipeline-context.js";
 export { runChunkStep } from "./steps/chunk.step.js";
 export type { ChunkResult } from "./steps/chunk.step.js";
 export { runDiscoverStep } from "./steps/discover.step.js";

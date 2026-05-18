@@ -3,6 +3,7 @@ import { normalizeCodexPageUrl } from "@unofficial-codex-wiki/sources";
 import { createSnapshotId, type DocsManifest, type FetchPageRecord, type TransformPageRecord, type TransformReport } from "@unofficial-codex-wiki/storage";
 import { buildManifestPathMap, resolveManifestPathEntry, transformMarkdownPage } from "@unofficial-codex-wiki/transformer";
 import type { PipelineContext } from "../pipeline-context.js";
+import { emitProgress } from "../progress.js";
 
 export type TransformResult = {
   manifest: DocsManifest;
@@ -23,6 +24,17 @@ export async function runTransformStep(context: PipelineContext): Promise<Transf
   const fetchRecords = new Map(fetchReport.pages.map((page) => [normalizeCodexPageUrl(page.url).markdownSourceUrl, page]));
   const manifestPages: ManifestPage[] = [];
   const reportPages: TransformPageRecord[] = [];
+
+  emitProgress(context, {
+    step: "transform",
+    phase: "start",
+    message: `Transforming ${urls.length} raw Markdown page(s)`,
+    total: urls.length,
+    counts: {
+      pages: urls.length
+    },
+    outputPaths: ["generated/markdown/codex/", "data/latest/manifest.json"]
+  });
 
   for (const sourceUrl of urls) {
     const normalized = normalizeCodexPageUrl(sourceUrl);
@@ -99,8 +111,29 @@ export async function runTransformStep(context: PipelineContext): Promise<Transf
   await context.storage.writeTransformReport(report, snapshotId);
 
   if (failedPageCount > 0) {
+    emitProgress(context, {
+      step: "transform",
+      phase: "failed",
+      message: `Transform failed for ${failedPageCount} page(s)`,
+      counts: {
+        generated: report.generatedPageCount,
+        failed: failedPageCount
+      },
+      outputPaths: ["data/latest/manifest.json", "data/latest/metadata/openai-codex.transform.json"]
+    });
     throw new Error(`Transform failed for ${failedPageCount} page(s). See data/latest/manifest.json.`);
   }
+
+  emitProgress(context, {
+    step: "transform",
+    phase: "complete",
+    message: `Generated ${report.generatedPageCount} Markdown page(s)`,
+    counts: {
+      generated: report.generatedPageCount,
+      failed: failedPageCount
+    },
+    outputPaths: ["generated/markdown/codex/", "data/latest/manifest.json", "data/latest/metadata/openai-codex.transform.json"]
+  });
 
   return {
     manifest,

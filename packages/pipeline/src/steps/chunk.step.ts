@@ -2,6 +2,7 @@ import { createAgentDocPageRecord, chunkMarkdownPage, splitFrontMatter, toAgentD
 import { nowIsoDateTime, type AgentDocChunkRecord, type AgentDocPageRecord } from "@unofficial-codex-wiki/core";
 import type { AgentDocsManifest, ChunkReport } from "@unofficial-codex-wiki/storage";
 import type { PipelineContext } from "../pipeline-context.js";
+import { emitProgress } from "../progress.js";
 
 export type ChunkResult = {
   agentManifest: AgentDocsManifest;
@@ -19,6 +20,17 @@ export async function runChunkStep(context: PipelineContext): Promise<ChunkResul
   const pageRecords: AgentDocPageRecord[] = [];
   const chunkRecords: AgentDocChunkRecord[] = [];
   const chunkIdsByPageId = new Map<string, string[]>();
+
+  emitProgress(context, {
+    step: "chunk",
+    phase: "start",
+    message: `Chunking ${limitedPages.length} generated Markdown page(s)`,
+    total: limitedPages.length,
+    counts: {
+      pages: limitedPages.length
+    },
+    outputPaths: ["generated/agent/docs.pages.jsonl", "generated/agent/docs.chunks.jsonl"]
+  });
 
   for (const page of limitedPages) {
     const generatedMarkdown = await context.storage.readGeneratedMarkdown(page.localMarkdownPath);
@@ -65,6 +77,17 @@ export async function runChunkStep(context: PipelineContext): Promise<ChunkResul
     manifestPath: "generated/agent/docs.manifest.json"
   };
   await context.storage.writeChunkReport(report);
+
+  emitProgress(context, {
+    step: "chunk",
+    phase: "complete",
+    message: `Chunked ${report.pageCount} page(s) into ${report.chunkCount} chunk(s)`,
+    counts: {
+      pages: report.pageCount,
+      chunks: report.chunkCount
+    },
+    outputPaths: [report.pagesJsonlPath, report.chunksJsonlPath, report.manifestPath]
+  });
 
   return {
     agentManifest,

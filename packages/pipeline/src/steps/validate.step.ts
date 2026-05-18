@@ -4,12 +4,19 @@ import { nowIsoDateTime } from "@unofficial-codex-wiki/core";
 import { validateMirror, type GeneratedMarkdownPage, type ValidationReport } from "@unofficial-codex-wiki/validator";
 import type { AgentDocsManifest } from "@unofficial-codex-wiki/storage";
 import type { PipelineContext } from "../pipeline-context.js";
+import { emitProgress } from "../progress.js";
 
 export type ValidateResult = {
   report: ValidationReport;
 };
 
 export async function runValidateStep(context: PipelineContext): Promise<ValidateResult> {
+  emitProgress(context, {
+    step: "validate",
+    phase: "start",
+    message: "Validating generated mirror outputs"
+  });
+
   const discovery = await context.storage.discoveryOutputExists()
     ? await context.storage.readLatestDiscoveryOutput()
     : null;
@@ -41,6 +48,16 @@ export async function runValidateStep(context: PipelineContext): Promise<Validat
   });
 
   await context.storage.writeValidationReport(report);
+  emitProgress(context, {
+    step: "validate",
+    phase: report.ok ? "complete" : "failed",
+    message: `Validation ${report.ok ? "passed" : "failed"} with ${report.errorCount} error(s) and ${report.warningCount} warning(s)`,
+    counts: {
+      errors: report.errorCount,
+      warnings: report.warningCount
+    },
+    outputPaths: ["data/latest/validation-report.json"]
+  });
   return { report };
 }
 

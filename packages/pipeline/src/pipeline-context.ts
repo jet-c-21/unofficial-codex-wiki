@@ -12,7 +12,36 @@ export type PipelineCommandOptions = {
   projectRoot?: string;
   httpClient?: HttpFetchClient;
   delay?: DelayFunction;
+  onProgress?: PipelineProgressListener;
 };
+
+export type PipelineStepName =
+  | "sync"
+  | "discover"
+  | "fetch"
+  | "transform"
+  | "chunk"
+  | "index"
+  | "validate"
+  | "diff";
+
+export type PipelineProgressPhase = "start" | "progress" | "complete" | "failed";
+
+export type PipelineProgressEvent = {
+  step: PipelineStepName;
+  phase: PipelineProgressPhase;
+  message: string;
+  current?: number;
+  total?: number;
+  item?: string;
+  status?: string;
+  elapsedMs?: number;
+  estimatedRemainingMs?: number;
+  counts?: Record<string, number>;
+  outputPaths?: string[];
+};
+
+export type PipelineProgressListener = (event: PipelineProgressEvent) => void;
 
 export type PipelineContext = {
   policy: CrawlerPolicy;
@@ -20,6 +49,7 @@ export type PipelineContext = {
   httpClient?: HttpFetchClient;
   delay?: DelayFunction;
   limit?: number;
+  onProgress?: PipelineProgressListener;
 };
 
 export function createPipelineContext(options: PipelineCommandOptions = {}): PipelineContext {
@@ -63,6 +93,10 @@ export function createPipelineContext(options: PipelineCommandOptions = {}): Pip
 
   if (options.limit !== undefined) {
     context.limit = options.limit;
+  }
+
+  if (options.onProgress !== undefined) {
+    context.onProgress = options.onProgress;
   }
 
   return context;

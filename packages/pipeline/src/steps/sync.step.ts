@@ -13,6 +13,7 @@ import { runTransformStep } from "./transform.step.js";
 import { runValidateStep } from "./validate.step.js";
 import type { FetchReport } from "@unofficial-codex-wiki/storage";
 import type { PipelineContext } from "../pipeline-context.js";
+import { emitProgress } from "../progress.js";
 
 export type SyncResult = {
   discover: DiscoverResult;
@@ -25,6 +26,13 @@ export type SyncResult = {
 };
 
 export async function runSyncStep(context: PipelineContext): Promise<SyncResult> {
+  const startedAtMs = Date.now();
+  emitProgress(context, {
+    step: "sync",
+    phase: "start",
+    message: "Starting local Codex docs sync"
+  });
+
   const discover = await runDiscoverStep(context);
   const fetch = await runFetchStep(context);
   const transform = await runTransformStep(context);
@@ -33,10 +41,43 @@ export async function runSyncStep(context: PipelineContext): Promise<SyncResult>
   const validation = (await runValidateStep(context)).report;
 
   if (!validation.ok) {
+    emitProgress(context, {
+      step: "sync",
+      phase: "failed",
+      message: `Validation failed with ${validation.errorCount} error(s)`,
+      elapsedMs: Date.now() - startedAtMs,
+      counts: {
+        errors: validation.errorCount,
+        warnings: validation.warningCount
+      },
+      outputPaths: ["data/latest/validation-report.json"]
+    });
     throw new Error(`Validation failed with ${validation.errorCount} error(s). See data/latest/validation-report.json.`);
   }
 
   const diff = (await runDiffStep(context)).report;
+
+  emitProgress(context, {
+    step: "sync",
+    phase: "complete",
+    message: "Local Codex docs sync completed",
+    elapsedMs: Date.now() - startedAtMs,
+    counts: {
+      pages: transform.report.generatedPageCount,
+      chunks: chunk.report.chunkCount,
+      indexed: index.report.chunkCount,
+      diffPages: diff.pageCount
+    },
+    outputPaths: [
+      "data/latest/manifest.json",
+      "generated/markdown/codex/",
+      "generated/agent/docs.pages.jsonl",
+      "generated/agent/docs.chunks.jsonl",
+      "generated/search/docs.sqlite",
+      "data/latest/validation-report.json",
+      "data/latest/diff.json"
+    ]
+  });
 
   return {
     discover,

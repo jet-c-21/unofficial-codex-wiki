@@ -18,6 +18,7 @@
     "@unofficial-codex-wiki/config": "workspace:*",
     "@unofficial-codex-wiki/logger": "workspace:*",
     "@unofficial-codex-wiki/pipeline": "workspace:*",
+    "@unofficial-codex-wiki/validator": "workspace:*",
     "commander": "^14.0.0"
   }
 }
