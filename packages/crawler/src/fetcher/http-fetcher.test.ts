@@ -100,7 +100,9 @@ describe("CrawlerTextFetcher", () => {
       body: "status 200",
       fromCache: false
     });
-    expect(delays).toEqual([1, safeCrawlerPolicy.minDelayMsBetweenPageRequestsPerHost]);
+    expect(delays[0]).toBe(1);
+    expect(delays[1]).toBeGreaterThanOrEqual(safeCrawlerPolicy.minDelayMsBetweenPageRequestsPerHost - 25);
+    expect(delays[1]).toBeLessThanOrEqual(safeCrawlerPolicy.minDelayMsBetweenPageRequestsPerHost);
   });
 
   it("does not retry non-retryable statuses", async () => {

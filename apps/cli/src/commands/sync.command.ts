@@ -7,6 +7,6 @@ export function registerSyncCommand(program: Command): void {
     .action(createPlaceholderAction({
       commandName: "sync",
       milestone: "Milestone 5",
-      summary: "The full pipeline is intentionally out of Milestone 3 scope."
+      summary: "The full pipeline is intentionally out of Milestone 4 scope."
     }));
 }

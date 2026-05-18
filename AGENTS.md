@@ -24,9 +24,11 @@ Milestone 2 discovery and safe fetching are complete.
 
 Milestone 3 Markdown generation and link rewriting are complete.
 
-Do not begin Milestone 4 implementation until the user explicitly approves it.
+Milestone 4 JSONL chunking and search are complete.
 
-Do not implement JSONL chunking, SQLite indexing, search/read behavior, validation pipeline behavior, or docs sync behavior unless the user asks to start Milestone 4 or later.
+Do not begin Milestone 5 implementation until the user explicitly approves it.
+
+Do not implement validation pipeline behavior, snapshot diff behavior, or docs sync behavior unless the user asks to start Milestone 5 or later.
 
 ## V1 Scope
 

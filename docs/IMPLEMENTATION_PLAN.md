@@ -1,6 +1,6 @@
 # Implementation Plan
 
-Status: Milestone 3 complete, Milestone 4 pending user approval
+Status: Milestone 4 complete, Milestone 5 pending user approval
 Source of truth: `docs/PRODUCT_REQUIREMENTS.md`
 
 ## Phase 0 - Agent Customization and Planning
@@ -105,7 +105,9 @@ Milestone 3 note: `docs:transform` is implemented for Markdown-first fetched pag
 
 ## Milestone 4 - JSONL Chunks and Search
 
-Implement:
+Complete.
+
+Implemented:
 
 - JSONL page writer,
 - heading-aware chunker,
@@ -121,6 +123,8 @@ Validation:
 - SQLite file exists,
 - search returns results,
 - read prints pages.
+
+Milestone 4 note: `docs:chunk`, `docs:index`, `docs:search`, and `docs:read` are implemented. Chunking reads generated Markdown, strips generated front matter from agent content, preserves heading boundaries where possible, and writes `generated/agent/docs.pages.jsonl`, `generated/agent/docs.chunks.jsonl`, and `generated/agent/docs.manifest.json`. Indexing uses `better-sqlite3` with SQLite FTS5 at `generated/search/docs.sqlite`.
 
 ## Milestone 5 - Validation, Snapshots, and Docs
 

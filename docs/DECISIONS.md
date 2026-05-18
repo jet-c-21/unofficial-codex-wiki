@@ -90,6 +90,18 @@ Status: initialized from `docs/PRODUCT_REQUIREMENTS.md` during Phase 0.
 | Asset policy | Classify inline Markdown images as `asset` links and preserve their original URLs in Milestone 3; defer asset fetching and content-addressed local asset filenames until a later v1 pass that needs offline asset mirroring. |
 | Manifest output | Write `data/latest/manifest.json` and a timestamped snapshot manifest during transform; write `data/latest/metadata/openai-codex.transform.json` for command diagnostics. |
 
+## Milestone 4 Decisions
+
+| Area | Decision |
+|---|---|
+| Agent page content | Strip generated front matter before writing JSONL page and chunk content; source metadata remains in each JSONL record. |
+| Chunk IDs | Use stable per-page chunk IDs in the form `<page-id>#chunk-<1-based-index>`. |
+| Chunk boundaries | Prefer heading-bound sections and split oversized sections by Markdown blocks while preserving fenced code blocks. |
+| SQLite implementation | Use `better-sqlite3` and SQLite FTS5 for `generated/search/docs.sqlite`, with migrations recorded under `packages/storage/src/sqlite/migrations/`. |
+| FTS heading path storage | Store both structured `heading_path_json` and plain `heading_path`; the plain text column backs the FTS table and the JSON column backs structured search results. |
+| Read command matching | Resolve pages by manifest ID, generated local path, source/canonical/Markdown URL, or title slug; `#anchor` reads print the matching Markdown section. |
+| Native dependency build | In restricted sandboxes, build `better-sqlite3` under Node 24 with writable temp npm/node-gyp cache locations if the default home caches are read-only. |
+
 ## Decision Update Rule
 
 When a future Codex agent changes a product or architecture decision, update this file in the same task and explain the reason in the final response.

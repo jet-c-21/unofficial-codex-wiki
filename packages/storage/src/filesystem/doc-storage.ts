@@ -1,6 +1,12 @@
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
-import { normalizeProjectRelativePath, toPortablePath, type ManifestPage } from "@unofficial-codex-wiki/core";
+import {
+  normalizeProjectRelativePath,
+  toPortablePath,
+  type AgentDocChunkRecord,
+  type AgentDocPageRecord,
+  type ManifestPage
+} from "@unofficial-codex-wiki/core";
 import { normalizeCodexPageUrl, type CodexDiscoveryOutput } from "@unofficial-codex-wiki/sources";
 
 export type FetchPageRecord = {
@@ -37,6 +43,38 @@ export type TransformReport = {
   generatedPageCount: number;
   failedPageCount: number;
   pages: TransformPageRecord[];
+};
+
+export type AgentDocsManifestPage = {
+  id: string;
+  title: string;
+  sourceUrl: string;
+  canonicalUrl: string;
+  localMarkdownPath: string;
+  localJsonlChunkIds: string[];
+};
+
+export type AgentDocsManifest = {
+  generatedAt: string;
+  pageCount: number;
+  chunkCount: number;
+  pages: AgentDocsManifestPage[];
+};
+
+export type ChunkReport = {
+  chunkedAt: string;
+  pageCount: number;
+  chunkCount: number;
+  pagesJsonlPath: string;
+  chunksJsonlPath: string;
+  manifestPath: string;
+};
+
+export type IndexReport = {
+  indexedAt: string;
+  pageCount: number;
+  chunkCount: number;
+  sqlitePath: string;
 };
 
 export type DocStorageOptions = {
@@ -139,9 +177,57 @@ export class DocStorage {
     return this.readJson<DocsManifest>("data/latest/manifest.json");
   }
 
+  async latestManifestExists(): Promise<boolean> {
+    return this.fileExists("data/latest/manifest.json");
+  }
+
   async writeTransformReport(report: TransformReport, snapshotId = createSnapshotId()): Promise<void> {
     await this.writeJson("data/latest/metadata/openai-codex.transform.json", report);
     await this.writeJson(`data/snapshots/${snapshotId}/metadata/openai-codex.transform.json`, report);
+  }
+
+  async writeAgentPageRecords(records: readonly AgentDocPageRecord[]): Promise<void> {
+    await this.writeJsonl("generated/agent/docs.pages.jsonl", records);
+  }
+
+  async readAgentPageRecords(): Promise<AgentDocPageRecord[]> {
+    return this.readJsonl<AgentDocPageRecord>("generated/agent/docs.pages.jsonl");
+  }
+
+  async agentPageRecordsExist(): Promise<boolean> {
+    return this.fileExists("generated/agent/docs.pages.jsonl");
+  }
+
+  async writeAgentChunkRecords(records: readonly AgentDocChunkRecord[]): Promise<void> {
+    await this.writeJsonl("generated/agent/docs.chunks.jsonl", records);
+  }
+
+  async readAgentChunkRecords(): Promise<AgentDocChunkRecord[]> {
+    return this.readJsonl<AgentDocChunkRecord>("generated/agent/docs.chunks.jsonl");
+  }
+
+  async agentChunkRecordsExist(): Promise<boolean> {
+    return this.fileExists("generated/agent/docs.chunks.jsonl");
+  }
+
+  async writeAgentDocsManifest(manifest: AgentDocsManifest): Promise<void> {
+    await this.writeJson("generated/agent/docs.manifest.json", manifest);
+  }
+
+  async writeChunkReport(report: ChunkReport): Promise<void> {
+    await this.writeJson("data/latest/metadata/openai-codex.chunk.json", report);
+  }
+
+  async writeIndexReport(report: IndexReport): Promise<void> {
+    await this.writeJson("data/latest/metadata/openai-codex.index.json", report);
+  }
+
+  getSearchSqliteRelativePath(): string {
+    return "generated/search/docs.sqlite";
+  }
+
+  async searchSqliteExists(): Promise<boolean> {
+    return this.fileExists(this.getSearchSqliteRelativePath());
   }
 
   toAbsolutePath(relativePath: string): string {
@@ -177,6 +263,18 @@ export class DocStorage {
 
   private async writeJson(relativePath: string, value: unknown): Promise<void> {
     await this.writeText(relativePath, `${JSON.stringify(value, null, 2)}\n`);
+  }
+
+  private async writeJsonl(relativePath: string, records: readonly unknown[]): Promise<void> {
+    await this.writeText(relativePath, `${records.map((record) => JSON.stringify(record)).join("\n")}\n`);
+  }
+
+  private async readJsonl<T>(relativePath: string): Promise<T[]> {
+    const content = await this.readText(relativePath);
+    return content
+      .split("\n")
+      .filter((line) => line.trim().length > 0)
+      .map((line) => JSON.parse(line) as T);
   }
 }
 

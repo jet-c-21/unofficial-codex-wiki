@@ -7,6 +7,6 @@ export function registerValidateCommand(program: Command): void {
     .action(createPlaceholderAction({
       commandName: "validate",
       milestone: "Milestone 5",
-      summary: "Output validation is intentionally out of Milestone 3 scope."
+      summary: "Output validation is intentionally out of Milestone 4 scope."
     }));
 }
