@@ -21,7 +21,13 @@ function extractMainContent(html: string): string {
 }
 
 function cleanHtmlForMarkdown(html: string): string {
-  return html
+  const withoutHiddenUseCaseExportBlocks = removeElementsWithAttribute(
+    removeElementsWithAttribute(html, "section", /\b(?:data-use-case-print-cover|data-use-case-print-toc|data-use-case-export-only)\b/iu),
+    "div",
+    /\bdata-use-case-export-only\b/iu
+  );
+
+  return withoutHiddenUseCaseExportBlocks
     .replace(/<script\b[\s\S]*?<\/script>/giu, "\n")
     .replace(/<style\b[\s\S]*?<\/style>/giu, "\n")
     .replace(/<astro-island\b[\s\S]*?<\/astro-island>/giu, "\n")
@@ -29,8 +35,6 @@ function cleanHtmlForMarkdown(html: string): string {
     .replace(/<form\b[\s\S]*?<\/form>/giu, "\n")
     .replace(/<button\b[\s\S]*?<\/button>/giu, "\n")
     .replace(/<svg\b[\s\S]*?<\/svg>/giu, "\n")
-    .replace(/<section\b[^>]*(?:data-use-case-print-cover|data-use-case-print-toc|data-use-case-export-only)[^>]*>[\s\S]*?<\/section>/giu, "\n")
-    .replace(/<div\b[^>]*data-use-case-(?:pdf|export)[^>]*>[\s\S]*?<\/div>/giu, "\n")
     .replace(/<template\b[\s\S]*?<\/template>/giu, "\n")
     .replace(/<input\b[^>]*>/giu, "\n")
     .replace(/<br\s*\/?>/giu, "\n");
@@ -38,7 +42,9 @@ function cleanHtmlForMarkdown(html: string): string {
 
 function convertHtmlFragmentToMarkdown(html: string): string {
   let markdown = html
-    .replace(/<pre\b[^>]*>\s*<code\b[^>]*>([\s\S]*?)<\/code>\s*<\/pre>/giu, (_match, code: string) => `\n\n\`\`\`\n${decodeHtml(stripTags(code)).trim()}\n\`\`\`\n\n`)
+    .replace(/<div\b[^>]*class=["'][^"']*\bprompt-scroll__content\b[^"']*["'][^>]*>([\s\S]*?)<\/div>/giu, (_match, prompt: string) => `\n\n${formatFencedCodeBlock(prompt)}\n\n`)
+    .replace(/<pre\b[^>]*>\s*<code\b[^>]*>([\s\S]*?)<\/code>\s*<\/pre>/giu, (_match, code: string) => `\n\n${formatFencedCodeBlock(code)}\n\n`)
+    .replace(/<table\b[^>]*>([\s\S]*?)<\/table>/giu, (_match, table: string) => convertTableToMarkdown(table))
     .replace(/<img\b([^>]*)>/giu, (_match, attributes: string) => {
       const alt = extractAttribute(attributes, "alt");
       const src = extractAttribute(attributes, "src");
@@ -47,7 +53,8 @@ function convertHtmlFragmentToMarkdown(html: string): string {
       }
 
       return `\n\n![${cleanMarkdownText(alt)}](${src})\n\n`;
-    });
+    })
+    .replace(/<code\b[^>]*>([\s\S]*?)<\/code>/giu, (_match, code: string) => formatInlineCode(code));
 
   for (let depth = 6; depth >= 1; depth -= 1) {
     const headingPattern = new RegExp(`<h${depth}\\b([^>]*)>([\\s\\S]*?)<\\/h${depth}>`, "giu");
@@ -63,6 +70,7 @@ function convertHtmlFragmentToMarkdown(html: string): string {
   }
 
   markdown = markdown
+    .replace(/<\/a>\s*<a\b/giu, "</a> <a")
     .replace(/<a\b([^>]*)>([\s\S]*?)<\/a>/giu, (_match, attributes: string, inner: string) => {
       const href = extractAttribute(attributes, "href");
       const text = cleanLinkText(inner);
@@ -79,6 +87,137 @@ function convertHtmlFragmentToMarkdown(html: string): string {
     .replace(/<[^>]+>/gu, " ");
 
   return decodeHtml(markdown);
+}
+
+function removeElementsWithAttribute(html: string, tagName: string, attributePattern: RegExp): string {
+  const openingTagPattern = new RegExp(`<${tagName}\\b[^>]*>`, "giu");
+  let output = "";
+  let cursor = 0;
+  let match: RegExpExecArray | null;
+
+  while ((match = openingTagPattern.exec(html)) !== null) {
+    if (!attributePattern.test(match[0])) {
+      continue;
+    }
+
+    const end = findMatchingClosingTagEnd(html, tagName, openingTagPattern.lastIndex);
+    output += html.slice(cursor, match.index);
+    cursor = end ?? openingTagPattern.lastIndex;
+    openingTagPattern.lastIndex = cursor;
+  }
+
+  return output + html.slice(cursor);
+}
+
+function findMatchingClosingTagEnd(html: string, tagName: string, startIndex: number): number | undefined {
+  const tagPattern = new RegExp(`</?${tagName}\\b[^>]*>`, "giu");
+  tagPattern.lastIndex = startIndex;
+  let depth = 1;
+  let match: RegExpExecArray | null;
+
+  while ((match = tagPattern.exec(html)) !== null) {
+    if (match[0].startsWith("</")) {
+      depth -= 1;
+      if (depth === 0) {
+        return tagPattern.lastIndex;
+      }
+    } else if (!match[0].endsWith("/>")) {
+      depth += 1;
+    }
+  }
+
+  return undefined;
+}
+
+function convertTableToMarkdown(table: string): string {
+  const rowMatches = [...table.matchAll(/<tr\b[^>]*>([\s\S]*?)<\/tr>/giu)];
+  const rows = rowMatches
+    .map((rowMatch) => {
+      const rowHtml = rowMatch[1] ?? "";
+      const cells = [...rowHtml.matchAll(/<t[dh]\b[^>]*>([\s\S]*?)<\/t[dh]>/giu)].map((cellMatch) => cleanTableCell(cellMatch[1] ?? ""));
+      return cells;
+    })
+    .filter((cells) => cells.length > 0);
+
+  if (rows.length === 0) {
+    return "\n";
+  }
+
+  const columnCount = Math.max(...rows.map((row) => row.length));
+  const [header = [], ...body] = rows.map((row) => padTableRow(row, columnCount));
+  const separator = Array.from({ length: columnCount }, () => "---");
+  const tableLines = [header, separator, ...body].map((row) => `| ${row.join(" | ")} |`);
+
+  return `\n\n${tableLines.join("\n")}\n\n`;
+}
+
+function padTableRow(row: string[], columnCount: number): string[] {
+  return [...row, ...Array.from({ length: columnCount - row.length }, () => "")];
+}
+
+function cleanTableCell(value: string): string {
+  return cleanInlineMarkdownText(value).replace(/\|/gu, "\\|");
+}
+
+function cleanInlineMarkdownText(value: string): string {
+  return convertInlineHtmlToMarkdown(value)
+    .replace(/\s+/gu, " ")
+    .trim();
+}
+
+function convertInlineHtmlToMarkdown(value: string): string {
+  const markdown = value
+    .replace(/<code\b[^>]*>([\s\S]*?)<\/code>/giu, (_match, code: string) => formatInlineCode(code))
+    .replace(/<a\b([^>]*)>([\s\S]*?)<\/a>/giu, (_match, attributes: string, inner: string) => {
+      const href = extractAttribute(attributes, "href");
+      const text = cleanLinkText(inner);
+      if (href === undefined || text.length === 0) {
+        return text;
+      }
+
+      return `[${text}](${href})`;
+    });
+
+  return stripTags(markdown);
+}
+
+function formatFencedCodeBlock(value: string): string {
+  const code = normalizePreformattedText(value);
+  const fence = "`".repeat(Math.max(3, longestBacktickRun(code) + 1));
+  return `${fence}\n${protectGeneratedMarkdown(code)}\n${fence}`;
+}
+
+function normalizePreformattedText(value: string): string {
+  return decodeHtml(stripTagsPreservingText(value))
+    .replace(/\r\n?/gu, "\n")
+    .replace(/^(?:[ \t]*\n)+/u, "")
+    .replace(/(?:\n[ \t]*)+$/u, "")
+    .trimEnd();
+}
+
+function formatInlineCode(value: string): string {
+  const code = decodeHtml(stripTagsPreservingText(value))
+    .replace(/\s+/gu, " ")
+    .trim();
+
+  if (code.length === 0) {
+    return "";
+  }
+
+  const delimiter = "`".repeat(longestBacktickRun(code) + 1);
+  const protectedCode = protectGeneratedMarkdown(code);
+  return delimiter.length === 1 ? `${delimiter}${protectedCode}${delimiter}` : `${delimiter} ${protectedCode} ${delimiter}`;
+}
+
+function longestBacktickRun(value: string): number {
+  return Math.max(0, ...[...value.matchAll(/`+/gu)].map((match) => match[0].length));
+}
+
+function protectGeneratedMarkdown(value: string): string {
+  return value
+    .replace(/&/gu, "&amp;")
+    .replace(/</gu, "&lt;")
+    .replace(/>/gu, "&gt;");
 }
 
 function extractHtmlTitle(html: string): string | undefined {
@@ -119,6 +258,10 @@ function hasBlockMarkup(value: string): boolean {
 
 function stripTags(value: string): string {
   return value.replace(/<[^>]+>/gu, " ");
+}
+
+function stripTagsPreservingText(value: string): string {
+  return value.replace(/<[^>]+>/gu, "");
 }
 
 function normalizeMarkdownWhitespace(markdown: string): string {
