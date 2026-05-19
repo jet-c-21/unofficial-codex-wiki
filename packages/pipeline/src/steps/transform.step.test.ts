@@ -70,7 +70,7 @@ describe("runTransformStep", () => {
       ]);
       expect(cliMarkdown).toContain('source_url: "https://developers.openai.com/codex/cli"');
       expect(cliMarkdown).toContain('description: "Terminal client for Codex."');
-      expect(cliMarkdown).toContain("# CLI\n\nTerminal client for Codex.\n\nSee [Agents](agents.md).");
+      expect(cliMarkdown).toContain("# CLI\n\n> Terminal client for Codex.\n\nSee [Agents](agents.md).");
       expect(cliMarkdown).toContain("See [Agents](agents.md).");
     } finally {
       await rm(projectRoot, { recursive: true, force: true });

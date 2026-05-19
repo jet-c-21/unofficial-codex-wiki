@@ -36,7 +36,7 @@ describe("transformMarkdownPage", () => {
     expect(result.markdown).toContain('markdown_source_url: "https://developers.openai.com/codex/cli.md"');
     expect(result.markdown).toContain('local_path: "generated/markdown/codex/cli.md"');
     expect(result.markdown).toContain("unofficial_local_mirror: true");
-    expect(result.markdown).toContain("# Codex CLI\n\nTerminal client for local Codex work.\n\nSee [Agents]");
+    expect(result.markdown).toContain("# Codex CLI\n\n> Terminal client for local Codex work.\n\nSee [Agents]");
     expect(result.manifestPage.description).toBe("Terminal client for local Codex work.");
     expect(result.markdown).toContain("See [Agents](agents.md), [Configuration](#configuration), and [GitHub](https://github.com/openai/codex).");
     expect(result.markdown).toContain("[Do not rewrite](/codex/agents)");

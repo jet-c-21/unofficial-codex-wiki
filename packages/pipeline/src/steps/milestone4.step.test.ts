@@ -28,7 +28,7 @@ describe("Milestone 4 pipeline steps", () => {
         "---",
         "# Codex CLI",
         "",
-        "Terminal client for local Codex work.",
+        "> Terminal client for local Codex work.",
         "",
         "Sandbox approvals protect local edits.",
         "",

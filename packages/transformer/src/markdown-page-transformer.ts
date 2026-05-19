@@ -114,10 +114,11 @@ function insertDescriptionAfterTopHeading(markdown: string, description: string 
     return markdown;
   }
 
+  const blockquoteDescription = `> ${description}`;
   const lines = markdown.split("\n");
   const headingIndex = lines.findIndex((line) => /^#\s+\S/u.test(line));
   if (headingIndex === -1) {
-    return `${description}\n\n${markdown}`;
+    return `${blockquoteDescription}\n\n${markdown}`;
   }
 
   let insertionIndex = headingIndex + 1;
@@ -128,7 +129,7 @@ function insertDescriptionAfterTopHeading(markdown: string, description: string 
   return [
     ...lines.slice(0, headingIndex + 1),
     "",
-    description,
+    blockquoteDescription,
     "",
     ...lines.slice(insertionIndex)
   ].join("\n");
