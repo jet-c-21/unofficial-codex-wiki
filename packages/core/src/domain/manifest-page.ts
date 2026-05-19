@@ -3,6 +3,7 @@ export type ManifestPageStatus = "new" | "changed" | "unchanged" | "removed" | "
 export type ManifestPage = {
   id: string;
   title: string;
+  description?: string;
   sourceUrl: string;
   canonicalUrl: string;
   markdownSourceUrl?: string;

@@ -16,5 +16,9 @@ describe("parseCodexLlmsTxt", () => {
       "https://developers.openai.com/codex/cli.md",
       "https://developers.openai.com/codex/app/commands.md"
     ]);
+    expect(links.map((link) => link.description)).toEqual([
+      "Terminal client",
+      "Commands"
+    ]);
   });
 });

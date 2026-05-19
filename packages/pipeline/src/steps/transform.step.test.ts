@@ -18,6 +18,23 @@ describe("runTransformStep", () => {
         urls: [
           "https://developers.openai.com/codex/cli.md",
           "https://developers.openai.com/codex/agents.md"
+        ],
+        pages: [
+          {
+            id: "cli",
+            title: "CLI",
+            description: "Terminal client for Codex.",
+            sourceUrl: "https://developers.openai.com/codex/cli",
+            canonicalUrl: "https://developers.openai.com/codex/cli",
+            markdownSourceUrl: "https://developers.openai.com/codex/cli.md"
+          },
+          {
+            id: "agents",
+            title: "Agents",
+            sourceUrl: "https://developers.openai.com/codex/agents",
+            canonicalUrl: "https://developers.openai.com/codex/agents",
+            markdownSourceUrl: "https://developers.openai.com/codex/agents.md"
+          }
         ]
       }, "snapshot-discovery");
       await storage.createRawMarkdownCache("https://developers.openai.com/codex/cli.md").write("# CLI\n\nSee [Agents](/codex/agents).\n");
@@ -52,6 +69,8 @@ describe("runTransformStep", () => {
         "generated/markdown/codex/cli.md"
       ]);
       expect(cliMarkdown).toContain('source_url: "https://developers.openai.com/codex/cli"');
+      expect(cliMarkdown).toContain('description: "Terminal client for Codex."');
+      expect(cliMarkdown).toContain("# CLI\n\nTerminal client for Codex.\n\nSee [Agents](agents.md).");
       expect(cliMarkdown).toContain("See [Agents](agents.md).");
     } finally {
       await rm(projectRoot, { recursive: true, force: true });

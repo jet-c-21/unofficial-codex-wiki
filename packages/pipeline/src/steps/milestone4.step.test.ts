@@ -17,6 +17,7 @@ describe("Milestone 4 pipeline steps", () => {
       await storage.writeGeneratedMarkdown("generated/markdown/codex/cli.md", [
         "---",
         'title: "Codex CLI"',
+        'description: "Terminal client for local Codex work."',
         'source_url: "https://developers.openai.com/codex/cli"',
         'canonical_url: "https://developers.openai.com/codex/cli"',
         'local_path: "generated/markdown/codex/cli.md"',
@@ -26,6 +27,8 @@ describe("Milestone 4 pipeline steps", () => {
         "unofficial_local_mirror: true",
         "---",
         "# Codex CLI",
+        "",
+        "Terminal client for local Codex work.",
         "",
         "Sandbox approvals protect local edits.",
         "",
@@ -40,6 +43,7 @@ describe("Milestone 4 pipeline steps", () => {
         pages: [{
           id: "cli",
           title: "Codex CLI",
+          description: "Terminal client for local Codex work.",
           sourceUrl: "https://developers.openai.com/codex/cli",
           canonicalUrl: "https://developers.openai.com/codex/cli",
           markdownSourceUrl: "https://developers.openai.com/codex/cli.md",
@@ -55,6 +59,7 @@ describe("Milestone 4 pipeline steps", () => {
       const chunkResult = await runChunkStep(context);
       const indexResult = await runIndexStep(context);
       const searchResult = await runSearchStep(context, { query: "sandbox approvals" });
+      const descriptionSearchResult = await runSearchStep(context, { query: "Terminal client" });
       const readResult = await runReadStep(context, { pageOrSlug: "cli#configure" });
 
       expect(chunkResult.report).toMatchObject({
@@ -66,6 +71,10 @@ describe("Milestone 4 pipeline steps", () => {
         title: "Codex CLI",
         sourceUrl: "https://developers.openai.com/codex/cli",
         localMarkdownPath: "generated/markdown/codex/cli.md"
+      });
+      expect(descriptionSearchResult.results[0]).toMatchObject({
+        title: "Codex CLI",
+        chunkId: "cli#chunk-1"
       });
       expect(readResult.content).toBe("## Configure\n\nUse [settings](settings.md).\n");
       await expect(storage.readAgentPageRecords()).resolves.toHaveLength(1);

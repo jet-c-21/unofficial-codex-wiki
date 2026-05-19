@@ -6,6 +6,7 @@ export function toAgentDocChunkRecord(chunk: DocChunk): AgentDocChunkRecord {
     id: chunk.id,
     pageId: chunk.pageId,
     title: chunk.title,
+    ...(chunk.description === undefined ? {} : { description: chunk.description }),
     sourceUrl: chunk.sourceUrl,
     canonicalUrl: chunk.canonicalUrl,
     localMarkdownPath: chunk.localMarkdownPath,

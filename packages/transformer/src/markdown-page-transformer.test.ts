@@ -13,6 +13,7 @@ describe("transformMarkdownPage", () => {
       sourceUrl: "https://developers.openai.com/codex/cli.md",
       fetchedAt: "2026-05-19T00:00:00.000Z",
       manifestPathMap,
+      description: "Terminal client for local Codex work.",
       rawMarkdown: [
         "# Codex CLI",
         "",
@@ -30,10 +31,13 @@ describe("transformMarkdownPage", () => {
     });
 
     expect(result.markdown).toContain('title: "Codex CLI"');
+    expect(result.markdown).toContain('description: "Terminal client for local Codex work."');
     expect(result.markdown).toContain('source_url: "https://developers.openai.com/codex/cli"');
     expect(result.markdown).toContain('markdown_source_url: "https://developers.openai.com/codex/cli.md"');
     expect(result.markdown).toContain('local_path: "generated/markdown/codex/cli.md"');
     expect(result.markdown).toContain("unofficial_local_mirror: true");
+    expect(result.markdown).toContain("# Codex CLI\n\nTerminal client for local Codex work.\n\nSee [Agents]");
+    expect(result.manifestPage.description).toBe("Terminal client for local Codex work.");
     expect(result.markdown).toContain("See [Agents](agents.md), [Configuration](#configuration), and [GitHub](https://github.com/openai/codex).");
     expect(result.markdown).toContain("[Do not rewrite](/codex/agents)");
     expect(result.markdown).toContain("![Screenshot](https://developers.openai.com/assets/codex/example.png)");

@@ -5,6 +5,7 @@ export type DocChunk = {
   id: string;
   pageId: string;
   title: string;
+  description?: string;
   sourceUrl: SourceUrl;
   canonicalUrl: SourceUrl;
   localMarkdownPath: LocalPath;

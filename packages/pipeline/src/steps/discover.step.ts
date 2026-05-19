@@ -3,6 +3,7 @@ import { CrawlerTextFetcher } from "@unofficial-codex-wiki/crawler";
 import { nowIsoDateTime } from "@unofficial-codex-wiki/core";
 import {
   createCodexDiscoveryOutput,
+  type CodexDiscoveryPage,
   normalizeCodexPageUrl,
   parseCodexUseCasesHtml,
   type CodexDiscoveryOutput
@@ -46,7 +47,7 @@ export async function runDiscoverStep(context: PipelineContext): Promise<Discove
 
   if (context.policy.cacheMode === "prefer-cache" && await context.storage.discoveryOutputExists()) {
     const discovery = await context.storage.readLatestDiscoveryOutput();
-    if (discoveryIncludesUseCases(discovery)) {
+    if (discoveryIncludesUseCases(discovery) && discoveryIncludesPageMetadata(discovery)) {
       emitProgress(context, {
         step: "discover",
         phase: "complete",
@@ -140,6 +141,11 @@ function createAugmentedCodexDiscoveryOutput(input: {
   const discovery = createCodexDiscoveryOutput(input.llmsText, input.discoveredAt);
   const seenCanonicalUrls = new Set<string>();
   const urls: string[] = [];
+  const pagesByCanonicalUrl = new Map<string, CodexDiscoveryPage>();
+
+  for (const page of discovery.pages ?? []) {
+    pagesByCanonicalUrl.set(page.canonicalUrl, page);
+  }
 
   for (const url of discovery.urls) {
     const normalized = normalizeCodexPageUrl(url);
@@ -158,12 +164,29 @@ function createAugmentedCodexDiscoveryOutput(input: {
 
     seenCanonicalUrls.add(link.canonicalUrl);
     urls.push(link.canonicalUrl);
+    pagesByCanonicalUrl.set(link.canonicalUrl, {
+      id: link.id,
+      title: link.id,
+      sourceUrl: link.canonicalUrl,
+      canonicalUrl: link.canonicalUrl,
+      markdownSourceUrl: link.markdownSourceUrl
+    });
   }
 
   return {
     ...discovery,
     pageCount: urls.length,
-    urls
+    urls,
+    pages: urls.map((url) => {
+      const normalized = normalizeCodexPageUrl(url);
+      return pagesByCanonicalUrl.get(normalized.canonicalUrl) ?? {
+        id: normalized.id,
+        title: normalized.id,
+        sourceUrl: normalized.canonicalUrl,
+        canonicalUrl: normalized.canonicalUrl,
+        markdownSourceUrl: normalized.markdownSourceUrl
+      };
+    })
   };
 }
 
@@ -175,4 +198,10 @@ function discoveryIncludesUseCases(discovery: CodexDiscoveryOutput): boolean {
       return false;
     }
   });
+}
+
+function discoveryIncludesPageMetadata(discovery: CodexDiscoveryOutput): boolean {
+  return discovery.pages !== undefined
+    && discovery.pages.length >= discovery.urls.length
+    && discovery.pages.some((page) => page.description !== undefined);
 }

@@ -10,6 +10,7 @@ export type IsoDateTime = string;
 export type DocPage = {
   id: string;
   title: string;
+  description?: string;
   sourceUrl: SourceUrl;
   canonicalUrl: SourceUrl;
   markdownSourceUrl?: SourceUrl;

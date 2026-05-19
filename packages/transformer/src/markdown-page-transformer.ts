@@ -11,6 +11,7 @@ export type TransformMarkdownPageInput = {
   rawMarkdown: string;
   fetchedAt: string;
   manifestPathMap: ManifestPathMap;
+  description?: string;
   localRawMarkdownPath?: string;
   localRawHtmlPath?: string;
 };
@@ -29,12 +30,14 @@ export function transformMarkdownPage(input: TransformMarkdownPageInput): Transf
     throw new Error(`Missing manifest path map entry for ${input.sourceUrl}`);
   }
 
+  const description = normalizeDescription(input.description);
   const normalizedBody = normalizeMarkdownBody(input.rawMarkdown);
-  const title = extractMarkdownTitle(normalizedBody, normalizedUrl.id);
-  const headings = extractMarkdownHeadings(normalizedBody);
+  const markdownWithDescription = insertDescriptionAfterTopHeading(normalizedBody, description);
+  const title = extractMarkdownTitle(markdownWithDescription, normalizedUrl.id);
+  const headings = extractMarkdownHeadings(markdownWithDescription);
   const headingSlugs = new Set(headings.map((heading) => heading.slug));
   const rewriteResult = rewriteMarkdownLinks({
-    markdown: normalizedBody,
+    markdown: markdownWithDescription,
     currentEntry,
     manifestPathMap: input.manifestPathMap,
     headingSlugs
@@ -44,6 +47,7 @@ export function transformMarkdownPage(input: TransformMarkdownPageInput): Transf
   const page: DocPage = {
     id: normalizedUrl.id,
     title,
+    ...(description === undefined ? {} : { description }),
     sourceUrl: normalizedUrl.canonicalUrl,
     canonicalUrl: normalizedUrl.canonicalUrl,
     markdownSourceUrl: normalizedUrl.markdownSourceUrl,
@@ -70,6 +74,7 @@ export function transformMarkdownPage(input: TransformMarkdownPageInput): Transf
   const manifestPage: ManifestPage = {
     id: page.id,
     title: page.title,
+    ...(page.description === undefined ? {} : { description: page.description }),
     sourceUrl: page.sourceUrl,
     canonicalUrl: page.canonicalUrl,
     markdownSourceUrl: normalizedUrl.markdownSourceUrl,
@@ -97,4 +102,34 @@ export function transformMarkdownPage(input: TransformMarkdownPageInput): Transf
     manifestPage,
     markdown: `${buildMarkdownFrontMatter(page)}${rewriteResult.markdown}`
   };
+}
+
+function normalizeDescription(description: string | undefined): string | undefined {
+  const normalizedDescription = description?.trim().replace(/\s+/gu, " ");
+  return normalizedDescription === undefined || normalizedDescription.length === 0 ? undefined : normalizedDescription;
+}
+
+function insertDescriptionAfterTopHeading(markdown: string, description: string | undefined): string {
+  if (description === undefined || markdown.includes(description)) {
+    return markdown;
+  }
+
+  const lines = markdown.split("\n");
+  const headingIndex = lines.findIndex((line) => /^#\s+\S/u.test(line));
+  if (headingIndex === -1) {
+    return `${description}\n\n${markdown}`;
+  }
+
+  let insertionIndex = headingIndex + 1;
+  while (lines[insertionIndex] !== undefined && lines[insertionIndex]?.trim().length === 0) {
+    insertionIndex += 1;
+  }
+
+  return [
+    ...lines.slice(0, headingIndex + 1),
+    "",
+    description,
+    "",
+    ...lines.slice(insertionIndex)
+  ].join("\n");
 }

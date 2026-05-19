@@ -60,6 +60,7 @@ export async function runChunkStep(context: PipelineContext): Promise<ChunkResul
     pages: pageRecords.map((page) => ({
       id: page.id,
       title: page.title,
+      ...(page.description === undefined ? {} : { description: page.description }),
       sourceUrl: page.sourceUrl,
       canonicalUrl: page.canonicalUrl,
       localMarkdownPath: page.localMarkdownPath,

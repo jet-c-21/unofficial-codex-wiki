@@ -22,6 +22,7 @@ export async function runTransformStep(context: PipelineContext): Promise<Transf
   const urls = context.limit === undefined ? discovery.urls : discovery.urls.slice(0, context.limit);
   const manifestPathMap = buildManifestPathMap(urls);
   const fetchRecords = new Map(fetchReport.pages.map((page) => [normalizeCodexPageUrl(page.url).markdownSourceUrl, page]));
+  const discoveryPages = new Map((discovery.pages ?? []).map((page) => [page.canonicalUrl, page]));
   const manifestPages: ManifestPage[] = [];
   const reportPages: TransformPageRecord[] = [];
 
@@ -43,6 +44,7 @@ export async function runTransformStep(context: PipelineContext): Promise<Transf
     const localRawMarkdownPath = fetchRecord?.localRawMarkdownPath ?? (sourceType === "markdown" ? context.storage.getRawMarkdownRelativePath(sourceUrl) : undefined);
     const localRawHtmlPath = fetchRecord?.localRawHtmlPath ?? (sourceType === "html" ? context.storage.getRawHtmlRelativePath(sourceUrl) : undefined);
     const pathEntry = resolveManifestPathEntry(manifestPathMap, sourceUrl);
+    const discoveryPage = discoveryPages.get(normalized.canonicalUrl);
 
     if (pathEntry === undefined) {
       throw new Error(`Internal transform error: missing generated path for ${sourceUrl}`);
@@ -56,6 +58,7 @@ export async function runTransformStep(context: PipelineContext): Promise<Transf
         ...(localRawHtmlPath === undefined ? {} : { localRawHtmlPath }),
         localMarkdownPath: pathEntry.localMarkdownPath,
         fetchedAt: fetchReport.fetchedAt,
+        ...(discoveryPage?.description === undefined ? {} : { description: discoveryPage.description }),
         failureReason: fetchFailureReason
       });
       manifestPages.push(failedPage);
@@ -75,6 +78,7 @@ export async function runTransformStep(context: PipelineContext): Promise<Transf
         ...(localRawHtmlPath === undefined ? {} : { localRawHtmlPath }),
         localMarkdownPath: pathEntry.localMarkdownPath,
         fetchedAt: fetchReport.fetchedAt,
+        ...(discoveryPage?.description === undefined ? {} : { description: discoveryPage.description }),
         failureReason
       });
       manifestPages.push(failedPage);
@@ -93,6 +97,7 @@ export async function runTransformStep(context: PipelineContext): Promise<Transf
       rawMarkdown,
       fetchedAt: fetchReport.fetchedAt,
       manifestPathMap,
+      ...(discoveryPage?.description === undefined ? {} : { description: discoveryPage.description }),
       ...(localRawMarkdownPath === undefined ? {} : { localRawMarkdownPath }),
       ...(localRawHtmlPath === undefined ? {} : { localRawHtmlPath })
     });
@@ -174,12 +179,14 @@ function createFailedManifestPage(input: {
   localRawHtmlPath?: string;
   localMarkdownPath: string;
   fetchedAt: string;
+  description?: string;
   failureReason: string;
 }): ManifestPage {
   const normalized = normalizeCodexPageUrl(input.sourceUrl);
   const page: ManifestPage = {
     id: normalized.id,
     title: normalized.id,
+    ...(input.description === undefined ? {} : { description: input.description }),
     sourceUrl: normalized.canonicalUrl,
     canonicalUrl: normalized.canonicalUrl,
     markdownSourceUrl: normalized.markdownSourceUrl,

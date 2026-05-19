@@ -2,6 +2,7 @@ export type AgentDocPageRecord = {
   recordType: "page";
   id: string;
   title: string;
+  description?: string;
   sourceUrl: string;
   canonicalUrl: string;
   markdownSourceUrl?: string;
@@ -24,6 +25,7 @@ export type AgentDocChunkRecord = {
   id: string;
   pageId: string;
   title: string;
+  description?: string;
   sourceUrl: string;
   canonicalUrl: string;
   localMarkdownPath: string;

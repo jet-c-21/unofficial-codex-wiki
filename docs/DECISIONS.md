@@ -123,6 +123,7 @@ Status: initialized from `docs/PRODUCT_REQUIREMENTS.md` during Phase 0.
 | Use-cases coverage | Crawl the official `/codex/use-cases` HTML index and discovered `/codex/use-cases/**` page links as an explicitly user-approved static HTML fallback, because this section is displayed on the official site but is not listed in `llms.txt`. |
 | Use-cases organization | Store fetched use-case source HTML under `data/latest/raw-html/use-cases/` and generate Markdown under `generated/markdown/codex/use-cases/` so local data and generated output follow the official URL hierarchy. |
 | Use-cases filter URLs | Ignore query-only use-case filter/search URLs as separate pages; normalize them to the canonical `/codex/use-cases` page to avoid mirroring UI state as duplicate documents. |
+| Page descriptions | Preserve official page descriptions from `/codex/llms.txt` as generated metadata and render them below each top-level heading so local read/search output matches useful website context without switching to HTML-first crawling. |
 
 ## Decision Update Rule
 

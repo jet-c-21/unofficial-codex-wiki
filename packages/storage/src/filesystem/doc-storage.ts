@@ -50,6 +50,7 @@ export type TransformReport = {
 export type AgentDocsManifestPage = {
   id: string;
   title: string;
+  description?: string;
   sourceUrl: string;
   canonicalUrl: string;
   localMarkdownPath: string;

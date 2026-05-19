@@ -8,6 +8,10 @@ export function buildMarkdownFrontMatter(page: DocPage): string {
     `canonical_url: ${quoteYamlString(page.canonicalUrl)}`
   ];
 
+  if (page.description !== undefined) {
+    lines.push(`description: ${quoteYamlString(page.description)}`);
+  }
+
   if (page.markdownSourceUrl !== undefined) {
     lines.push(`markdown_source_url: ${quoteYamlString(page.markdownSourceUrl)}`);
   }
