@@ -23,7 +23,8 @@ export type PipelineStepName =
   | "chunk"
   | "index"
   | "validate"
-  | "diff";
+  | "diff"
+  | "export";
 
 export type PipelineProgressPhase = "start" | "progress" | "complete" | "failed";
 

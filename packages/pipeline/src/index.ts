@@ -13,6 +13,19 @@ export { runDiscoverStep } from "./steps/discover.step.js";
 export type { DiscoverResult } from "./steps/discover.step.js";
 export { runDiffStep } from "./steps/diff.step.js";
 export type { DiffResult } from "./steps/diff.step.js";
+export {
+  ExportCourseMaterialsValidationError,
+  formatExportCourseMaterialsValidationFailure,
+  inspectGeneratedOutputHealth,
+  runExportCourseMaterialsStep
+} from "./steps/export-course-materials.step.js";
+export type {
+  ExportCourseMaterialsHealthSummary,
+  ExportCourseMaterialsInput,
+  ExportCourseMaterialsResult,
+  GeneratedMarkdownHealth,
+  GeneratedOutputFileHealth
+} from "./steps/export-course-materials.step.js";
 export { runFetchStep } from "./steps/fetch.step.js";
 export { runIndexStep } from "./steps/index.step.js";
 export type { IndexResult } from "./steps/index.step.js";

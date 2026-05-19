@@ -92,4 +92,24 @@ generated/agent/docs.pages.jsonl
 generated/agent/docs.chunks.jsonl
 generated/agent/docs.manifest.json
 generated/search/docs.sqlite
+generated/exports/
+```
+
+## Course Materials Export
+
+Create a private ZIP for handing the local mirror to an AI course-building agent:
+
+```bash
+pnpm docs:export-course-materials
+```
+
+The command validates the mirror before writing a ZIP under `generated/exports/`.
+The archive includes generated Markdown, agent JSONL files, manifest/validation metadata, and root-level instructions for the receiving agent.
+It does not include the SQLite search index by default.
+
+If export fails because generated outputs are missing or empty, rebuild the local mirror and rerun the export:
+
+```bash
+pnpm docs:sync
+pnpm docs:export-course-materials
 ```

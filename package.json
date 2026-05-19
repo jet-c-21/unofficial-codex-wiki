@@ -21,7 +21,8 @@
     "docs:validate": "pnpm --filter @unofficial-codex-wiki/cli codex-wiki validate",
     "docs:search": "pnpm --filter @unofficial-codex-wiki/cli codex-wiki search",
     "docs:read": "pnpm --filter @unofficial-codex-wiki/cli codex-wiki read",
-    "docs:sync": "pnpm --filter @unofficial-codex-wiki/cli codex-wiki sync"
+    "docs:sync": "pnpm --filter @unofficial-codex-wiki/cli codex-wiki sync",
+    "docs:export-course-materials": "pnpm --filter @unofficial-codex-wiki/cli codex-wiki export-course-materials"
   },
   "devDependencies": {
     "@types/node": "^24.0.0",

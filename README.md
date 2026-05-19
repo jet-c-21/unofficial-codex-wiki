@@ -75,6 +75,21 @@ pnpm docs:read agent-approvals-security
 pnpm docs:read agent-approvals-security#sandbox-and-approvals
 ```
 
+Export a private AI-agent course-materials bundle:
+
+```bash
+pnpm docs:export-course-materials
+```
+
+The export command validates the local mirror first, then writes a ZIP under `generated/exports/`.
+The ZIP includes generated Markdown, agent JSONL files, mirror metadata, and root-level `README.md` / `AGENT_COURSE_CREATION_PROMPT.md` files for the next AI agent.
+If export reports broken or empty generated outputs, rebuild the mirror and export again:
+
+```bash
+pnpm docs:sync
+pnpm docs:export-course-materials
+```
+
 Important generated outputs:
 
 ```text
@@ -86,6 +101,7 @@ generated/agent/docs.pages.jsonl
 generated/agent/docs.chunks.jsonl
 generated/agent/docs.manifest.json
 generated/search/docs.sqlite
+generated/exports/
 ```
 
 ## Validation

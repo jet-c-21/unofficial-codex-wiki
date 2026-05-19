@@ -124,6 +124,7 @@ Status: initialized from `docs/PRODUCT_REQUIREMENTS.md` during Phase 0.
 | Use-cases organization | Store fetched use-case source HTML under `data/latest/raw-html/use-cases/` and generate Markdown under `generated/markdown/codex/use-cases/` so local data and generated output follow the official URL hierarchy. |
 | Use-cases filter URLs | Ignore query-only use-case filter/search URLs as separate pages; normalize them to the canonical `/codex/use-cases` page to avoid mirroring UI state as duplicate documents. |
 | Page descriptions | Preserve official page descriptions from `/codex/llms.txt` as generated metadata and render them as a Markdown blockquote below each top-level heading so local read/search output matches useful website context without switching to HTML-first crawling. |
+| Course materials export | Add `docs:export-course-materials` as a private local packaging command that validates the mirror, writes ZIP files under ignored `generated/exports/`, includes Markdown/JSONL plus agent instructions, and excludes generated summaries, rewrites, and the SQLite search index by default. On validation failure, keep export strict and print recovery commands instead of auto-running sync. Write ZIPs through a temporary file before rename so interrupted exports do not leave final zero-byte archives. |
 
 ## Decision Update Rule
 

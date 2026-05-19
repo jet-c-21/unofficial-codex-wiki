@@ -1,4 +1,4 @@
-import { readFile } from "node:fs/promises";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
@@ -13,6 +13,7 @@ describe("CLI skeleton", () => {
     expect(commandNames).toEqual([
       "chunk",
       "discover",
+      "export-course-materials",
       "extract",
       "fetch",
       "index",
@@ -31,7 +32,7 @@ describe("CLI skeleton", () => {
 
     const docsScripts = Object.entries(packageJson.scripts).filter(([name]) => name.startsWith("docs:"));
 
-    expect(docsScripts).toHaveLength(10);
+    expect(docsScripts).toHaveLength(11);
     for (const [, script] of docsScripts) {
       expect(script).toContain("pnpm --filter @unofficial-codex-wiki/cli codex-wiki");
       expect(script).not.toMatch(/&&|;|\|\||\|/u);
@@ -142,6 +143,71 @@ describe("CLI skeleton", () => {
       expect(errors[0]).toContain("sync failed: Offline discovery cache miss");
     } finally {
       console.log = originalLog;
+      console.error = originalError;
+      process.exitCode = originalExitCode;
+      if (originalInitCwd === undefined) {
+        delete process.env.INIT_CWD;
+      } else {
+        process.env.INIT_CWD = originalInitCwd;
+      }
+      process.chdir(originalCwd);
+      await rm(projectRoot, { recursive: true, force: true });
+    }
+  });
+
+  it("prints recovery commands when course materials export sees a broken mirror", async () => {
+    const originalCwd = process.cwd();
+    const projectRoot = await mkdtemp(join(tmpdir(), "codex-wiki-cli-export-broken-"));
+    const errors: string[] = [];
+    const originalError = console.error;
+    const originalExitCode = process.exitCode;
+    const originalInitCwd = process.env.INIT_CWD;
+
+    try {
+      process.chdir(projectRoot);
+      process.env.INIT_CWD = projectRoot;
+      process.exitCode = undefined;
+      console.error = (value?: unknown) => {
+        errors.push(String(value));
+      };
+
+      await mkdir(join(projectRoot, "data/latest"), { recursive: true });
+      await mkdir(join(projectRoot, "generated/markdown/codex"), { recursive: true });
+      await mkdir(join(projectRoot, "generated/agent"), { recursive: true });
+      await mkdir(join(projectRoot, "generated/search"), { recursive: true });
+      await writeFile(join(projectRoot, "generated/markdown/codex/cli.md"), "");
+      await writeFile(join(projectRoot, "generated/agent/docs.pages.jsonl"), "");
+      await writeFile(join(projectRoot, "generated/agent/docs.chunks.jsonl"), "");
+      await writeFile(join(projectRoot, "generated/search/docs.sqlite"), "");
+      await writeFile(join(projectRoot, "data/latest/manifest.json"), `${JSON.stringify({
+        generatedAt: "2026-05-19T00:00:00.000Z",
+        source: "https://developers.openai.com/codex/llms.txt",
+        pageCount: 1,
+        pages: [{
+          id: "cli",
+          title: "Codex CLI",
+          sourceUrl: "https://developers.openai.com/codex/cli",
+          canonicalUrl: "https://developers.openai.com/codex/cli",
+          markdownSourceUrl: "https://developers.openai.com/codex/cli.md",
+          localMarkdownPath: "generated/markdown/codex/cli.md",
+          localJsonlChunkIds: [],
+          contentHash: "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+          fetchedAt: "2026-05-19T00:00:00.000Z",
+          status: "new"
+        }]
+      }, null, 2)}\n`);
+
+      await createCli().parseAsync(["node", "codex-wiki", "export-course-materials"]);
+
+      const output = errors.join("\n");
+      expect(process.exitCode).toBe(1);
+      expect(output).toContain("generated mirror validation failed");
+      expect(output).toContain("generated/agent/docs.pages.jsonl: empty");
+      expect(output).toContain("empty generated Markdown files: 1");
+      expect(output).toContain("missing-jsonl-page");
+      expect(output).toContain("pnpm docs:sync");
+      expect(output).toContain("pnpm docs:export-course-materials");
+    } finally {
       console.error = originalError;
       process.exitCode = originalExitCode;
       if (originalInitCwd === undefined) {

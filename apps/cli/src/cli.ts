@@ -3,6 +3,7 @@ import { openAiCodexSourceConfig, safeCrawlerPolicy } from "@unofficial-codex-wi
 import { createLogger } from "@unofficial-codex-wiki/logger";
 import { registerChunkCommand } from "./commands/chunk.command.js";
 import { registerDiscoverCommand } from "./commands/discover.command.js";
+import { registerExportCourseMaterialsCommand } from "./commands/export-course-materials.command.js";
 import { registerExtractCommand } from "./commands/extract.command.js";
 import { registerFetchCommand } from "./commands/fetch.command.js";
 import { registerIndexCommand } from "./commands/index.command.js";
@@ -28,6 +29,7 @@ export function createCli(): Command {
     .version("0.0.0");
 
   registerDiscoverCommand(program);
+  registerExportCourseMaterialsCommand(program);
   registerFetchCommand(program);
   registerExtractCommand(program);
   registerTransformCommand(program);
