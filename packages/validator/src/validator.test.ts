@@ -215,12 +215,107 @@ describe("validateMirror", () => {
       generatedMarkdownPages: [{
         localMarkdownPath: "generated/markdown/codex/use-cases.md",
         content: baseInput.generatedMarkdownPages[0]?.content?.replaceAll("generated/markdown/codex/cli.md", "generated/markdown/codex/use-cases.md") ?? null
-      }]
+      }],
+      pageRecords: [{
+        ...baseInput.pageRecords[0]!,
+        id: "use-cases",
+        title: "Use cases",
+        sourceUrl: "https://developers.openai.com/codex/use-cases",
+        canonicalUrl: "https://developers.openai.com/codex/use-cases",
+        markdownSourceUrl: "https://developers.openai.com/codex/use-cases.md",
+        localMarkdownPath: "generated/markdown/codex/use-cases.md"
+      }],
+      chunkRecords: [{
+        ...baseInput.chunkRecords[0]!,
+        id: "use-cases#chunk-1",
+        pageId: "use-cases",
+        title: "Use cases",
+        sourceUrl: "https://developers.openai.com/codex/use-cases",
+        canonicalUrl: "https://developers.openai.com/codex/use-cases",
+        localMarkdownPath: "generated/markdown/codex/use-cases.md"
+      }],
+      agentManifest: {
+        ...baseInput.agentManifest!,
+        pages: [{
+          id: "use-cases",
+          title: "Use cases",
+          sourceUrl: "https://developers.openai.com/codex/use-cases",
+          canonicalUrl: "https://developers.openai.com/codex/use-cases",
+          localMarkdownPath: "generated/markdown/codex/use-cases.md",
+          localJsonlChunkIds: ["use-cases#chunk-1"]
+        }]
+      }
     });
 
     expect(report.checks.find((check) => check.name === "coverage")?.issues).not.toEqual(expect.arrayContaining([
       expect.objectContaining({
         code: "missing-manifest-page"
+      })
+    ]));
+  });
+
+  it("fails on agent data loss and count mismatches", () => {
+    const input = createSinglePageValidationInput("# Codex CLI\n");
+    const report = validateMirror({
+      ...input,
+      pageRecords: [{
+        ...input.pageRecords[0]!,
+        content: ""
+      }],
+      chunkRecords: [],
+      agentManifest: {
+        ...input.agentManifest!,
+        chunkCount: 0,
+        pages: [{
+          ...input.agentManifest!.pages[0]!,
+          localJsonlChunkIds: []
+        }]
+      }
+    });
+
+    const issueCodes = report.checks.flatMap((check) => check.issues).map((issue) => issue.code);
+    expect(issueCodes).toEqual(expect.arrayContaining([
+      "missing-jsonl-chunks",
+      "manifest-chunk-count-mismatch",
+      "empty-jsonl-page-content"
+    ]));
+  });
+
+  it("fails when optional coverage references are missing from the manifest", () => {
+    const input = createSinglePageValidationInput("# Codex CLI\n");
+    const report = validateMirror({
+      ...input,
+      discovery: {
+        ...input.discovery!,
+        coverageReference: {
+          source: "https://developers.openai.com/codex/llms-full.txt",
+          checkedAt: "2026-05-19T00:00:00.000Z",
+          pageCount: 1,
+          urls: ["https://developers.openai.com/codex/missing-page.md"]
+        }
+      }
+    });
+
+    expect(report.checks.flatMap((check) => check.issues)).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        code: "missing-coverage-reference-page"
+      })
+    ]));
+  });
+
+  it("fails when generated Markdown still contains source UI wrappers", () => {
+    const input = createSinglePageValidationInput([
+      "# Codex CLI",
+      "",
+      "<BentoContent href=\"/codex/cli/features\">",
+      "Card body.",
+      "</BentoContent>"
+    ].join("\n"));
+    const report = validateMirror(input);
+
+    expect(report.checks.flatMap((check) => check.issues)).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        code: "noisy-generated-markdown"
       })
     ]));
   });

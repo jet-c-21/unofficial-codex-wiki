@@ -16,6 +16,12 @@ export type CodexDiscoveryOutput = {
   pageCount: number;
   urls: string[];
   pages?: CodexDiscoveryPage[];
+  coverageReference?: {
+    source: string;
+    checkedAt: string;
+    pageCount: number;
+    urls: string[];
+  };
 };
 
 export function createCodexDiscoveryOutput(content: string, discoveredAt: string): CodexDiscoveryOutput {

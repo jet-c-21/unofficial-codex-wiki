@@ -5,7 +5,7 @@ import type { AgentDocsManifest } from "@unofficial-codex-wiki/storage";
 import { summarizeValidationIssues, type ValidationIssueSummary, type ValidationReport } from "@unofficial-codex-wiki/validator";
 import type { PipelineContext } from "../pipeline-context.js";
 import { emitProgress } from "../progress.js";
-import { writeZipArchive, type ZipArchiveEntry } from "../archive/zip-writer.js";
+import { inspectZipArchive, writeZipArchive, type ZipArchiveEntry } from "../archive/zip-writer.js";
 import { runValidateStep } from "./validate.step.js";
 
 export type ExportCourseMaterialsInput = {
@@ -126,6 +126,7 @@ export async function runExportCourseMaterialsStep(
 
   const absoluteOutputPath = context.storage.toAbsolutePath(outputPath);
   const byteCount = await writeZipArchive(absoluteOutputPath, entries);
+  await verifyCourseMaterialsArchive(absoluteOutputPath, entries);
 
   emitProgress(context, {
     step: "export",
@@ -156,6 +157,37 @@ export async function runExportCourseMaterialsStep(
     instructionPaths,
     materialRoots
   };
+}
+
+async function verifyCourseMaterialsArchive(absoluteOutputPath: string, entries: readonly ZipArchiveEntry[]): Promise<void> {
+  const archive = await readFile(absoluteOutputPath);
+  if (archive.length === 0) {
+    throw new Error("export-integrity: course materials ZIP was written as an empty file.");
+  }
+
+  const inspection = inspectZipArchive(archive);
+  const archivedEntries = new Set(inspection.entries);
+  const expectedEntries = new Set(entries.map((entry) => entry.path));
+  if (inspection.entryCount !== expectedEntries.size) {
+    throw new Error(`export-integrity: ZIP central directory contains ${inspection.entryCount} entries, expected ${expectedEntries.size}.`);
+  }
+
+  for (const requiredEntry of [
+    ...instructionPaths,
+    "generated/agent/docs.pages.jsonl",
+    "generated/agent/docs.chunks.jsonl",
+    "generated/agent/docs.manifest.json"
+  ]) {
+    if (!archivedEntries.has(requiredEntry)) {
+      throw new Error(`export-integrity: ZIP is missing required entry ${requiredEntry}.`);
+    }
+  }
+
+  for (const expectedEntry of expectedEntries) {
+    if (!archivedEntries.has(expectedEntry)) {
+      throw new Error(`export-integrity: ZIP is missing expected entry ${expectedEntry}.`);
+    }
+  }
 }
 
 export async function inspectGeneratedOutputHealth(context: PipelineContext): Promise<ExportCourseMaterialsHealthSummary> {

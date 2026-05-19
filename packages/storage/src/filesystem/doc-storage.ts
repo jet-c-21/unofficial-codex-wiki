@@ -144,6 +144,18 @@ export class DocStorage {
     };
   }
 
+  createCoverageReferenceDocumentCache() {
+    const relativePath = "data/latest/discovery/openai-codex.llms-full.txt";
+
+    return {
+      exists: async () => this.fileExists(relativePath),
+      read: async () => this.readText(relativePath),
+      write: async (content: string) => {
+        await this.writeText(relativePath, content);
+      }
+    };
+  }
+
   getRawMarkdownRelativePath(markdownSourceUrl: string): string {
     const normalized = normalizeCodexPageUrl(markdownSourceUrl);
     return toPortablePath(path.posix.join("data", "latest", "raw-markdown", `${normalized.id}.md`));

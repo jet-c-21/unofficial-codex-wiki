@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { parseCodexLlmsTxt } from "./codex-llms-parser.js";
+import { extractCodexCoverageReferenceUrls, parseCodexLlmsTxt } from "./codex-llms-parser.js";
 
 describe("parseCodexLlmsTxt", () => {
   it("extracts in-scope Markdown links and deduplicates canonical pages", () => {
@@ -19,6 +19,20 @@ describe("parseCodexLlmsTxt", () => {
     expect(links.map((link) => link.description)).toEqual([
       "Terminal client",
       "Commands"
+    ]);
+  });
+
+  it("extracts unique in-scope page URLs from llms-full style reference content", () => {
+    const urls = extractCodexCoverageReferenceUrls(`
+# Codex
+See https://developers.openai.com/codex/cli and /codex/app/features.md.
+Ignore https://developers.openai.com/api/docs/models.md and /codex/use-cases/background-codex-collection1.png.
+Duplicate [CLI](/codex/cli.md).
+    `);
+
+    expect(urls).toEqual([
+      "https://developers.openai.com/codex/app/features.md",
+      "https://developers.openai.com/codex/cli.md"
     ]);
   });
 });

@@ -3,6 +3,7 @@ import { CrawlerTextFetcher } from "@unofficial-codex-wiki/crawler";
 import { nowIsoDateTime } from "@unofficial-codex-wiki/core";
 import {
   createCodexDiscoveryOutput,
+  extractCodexCoverageReferenceUrls,
   type CodexDiscoveryPage,
   normalizeCodexPageUrl,
   parseCodexUseCasesHtml,
@@ -85,11 +86,21 @@ export async function runDiscoverStep(context: PipelineContext): Promise<Discove
       url: openAiCodexSourceConfig.useCasesUrl,
       cache: context.storage.createUseCasesDiscoveryDocumentCache()
     });
-    const discovery = createAugmentedCodexDiscoveryOutput({
+    const coverageReference = await fetchCoverageReference(context, fetcher);
+    const discoveryInput: {
+      llmsText: string;
+      useCasesHtml: string;
+      discoveredAt: string;
+      coverageReference?: CodexDiscoveryOutput["coverageReference"];
+    } = {
       llmsText: fetchResult.body,
       useCasesHtml: useCasesFetchResult.body,
       discoveredAt: nowIsoDateTime()
-    });
+    };
+    if (coverageReference !== undefined) {
+      discoveryInput.coverageReference = coverageReference;
+    }
+    const discovery = createAugmentedCodexDiscoveryOutput(discoveryInput);
     await context.storage.writeDiscoveryOutput(discovery);
     emitProgress(context, {
       step: "discover",
@@ -137,6 +148,7 @@ function createAugmentedCodexDiscoveryOutput(input: {
   llmsText: string;
   useCasesHtml: string;
   discoveredAt: string;
+  coverageReference?: CodexDiscoveryOutput["coverageReference"];
 }): CodexDiscoveryOutput {
   const discovery = createCodexDiscoveryOutput(input.llmsText, input.discoveredAt);
   const seenCanonicalUrls = new Set<string>();
@@ -173,7 +185,7 @@ function createAugmentedCodexDiscoveryOutput(input: {
     });
   }
 
-  return {
+  const output: CodexDiscoveryOutput = {
     ...discovery,
     pageCount: urls.length,
     urls,
@@ -188,6 +200,33 @@ function createAugmentedCodexDiscoveryOutput(input: {
       };
     })
   };
+
+  if (input.coverageReference !== undefined) {
+    output.coverageReference = input.coverageReference;
+  }
+
+  return output;
+}
+
+async function fetchCoverageReference(
+  context: PipelineContext,
+  fetcher: CrawlerTextFetcher
+): Promise<CodexDiscoveryOutput["coverageReference"] | undefined> {
+  try {
+    const result = await fetcher.fetchText({
+      url: openAiCodexSourceConfig.optionalCoverageUrl,
+      cache: context.storage.createCoverageReferenceDocumentCache()
+    });
+    const urls = extractCodexCoverageReferenceUrls(result.body);
+    return {
+      source: openAiCodexSourceConfig.optionalCoverageUrl,
+      checkedAt: nowIsoDateTime(),
+      pageCount: urls.length,
+      urls
+    };
+  } catch {
+    return undefined;
+  }
 }
 
 function discoveryIncludesUseCases(discovery: CodexDiscoveryOutput): boolean {

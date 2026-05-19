@@ -1,4 +1,4 @@
-export { parseCodexLlmsTxt } from "./openai-codex/codex-llms-parser.js";
+export { extractCodexCoverageReferenceUrls, parseCodexLlmsTxt } from "./openai-codex/codex-llms-parser.js";
 export type { ParsedCodexLink } from "./openai-codex/codex-llms-parser.js";
 export { openAiCodexSourceAdapter } from "./openai-codex/codex-source.adapter.js";
 export { createCodexDiscoveryOutput } from "./openai-codex/codex-url-discovery.js";
